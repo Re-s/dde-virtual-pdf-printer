@@ -110,6 +110,10 @@ dpkg-deb --root-owner-group --build debian/deepin-pdf-printer deepin-pdf-printer
 
 **依赖**：`cups`、`cups-filters`、`ghostscript`、`dde-control-center`、Qt6（Core/DBus）、DTK6
 
+> 🤖 **AI 二次开发**：clone 仓库后，AI 编程助手（Cursor / Claude Code / Codex 等）会自动加载
+> [`AGENTS.md`](AGENTS.md) —— 内含架构速览、构建铁律、全部踩坑经验与验证清单，
+> 可安全交给 AI 进行二次开发。
+
 ## 📁 项目结构
 
 ```

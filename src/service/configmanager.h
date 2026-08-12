@@ -1,0 +1,22 @@
+#pragma once
+#include <QObject>
+#include <QString>
+
+class ConfigManager : public QObject
+{
+    Q_OBJECT
+public:
+    explicit ConfigManager(QObject *parent = nullptr);
+
+    QString outputDir() const;         // 自定义输出目录（默认 ~/PDF）
+    void setOutputDir(const QString &dir);
+    bool autoOpen() const;             // 打印后自动打开 PDF
+    void setAutoOpen(bool open);
+
+Q_SIGNALS:
+    void outputDirChanged();
+    void autoOpenChanged();
+
+private:
+    void syncConfig();                 // 写回配置存储
+};

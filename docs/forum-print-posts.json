@@ -1,0 +1,366 @@
+{
+  "scanned": 2000,
+  "hits": [
+    {
+      "thread_id": 300713,
+      "post_id": 1804523,
+      "forum_id": 235,
+      "user_id": 53398,
+      "is_first": 0,
+      "matched": [
+        "pdf",
+        "PDF"
+      ],
+      "text": "uos 自带的，是 GB国标仿宋。 windows下编写的公文，是 windows自带的 中易仿宋。不是一个字体厂家的。系统认定为是两种不同的字体。 另外，还有 方正仿宋，deepin系统以前还有 中国电子集团 出品的 CESI仿宋. 可以截图，或者导出pdf, 用 atril 或者 evince, okular 程序，查看pdf 文件里，所包含的字体的完整名称。 另外，如果是 wps v12以上版本，如果缺字，程序底部会有提示：缺失的字体。可以点开看一下，自己修改为uos 现有的仿宋字体。 详细技术细节，这里有几篇文章，可以参考一下： 103. WPS Office (Linux版) 缺失仿",
+      "url": "https://bbs.deepin.org/post/300713"
+    },
+    {
+      "thread_id": 300247,
+      "post_id": 1804508,
+      "forum_id": 235,
+      "user_id": 168046,
+      "is_first": 0,
+      "matched": [
+        "打印",
+        "打印机",
+        "pdf",
+        "PDF",
+        "虚拟打印"
+      ],
+      "text": "先装个PDF虚拟打印机，打成PDF文件，然后就可以随便打印了",
+      "url": "https://bbs.deepin.org/post/300247"
+    },
+    {
+      "thread_id": 300695,
+      "post_id": 1804331,
+      "forum_id": 233,
+      "user_id": 316646,
+      "is_first": 1,
+      "matched": [
+        "打印",
+        "打印机"
+      ],
+      "text": "2003年10月，微软知名工程师雷蒙德·陈（Raymond Chen）在其“Old New Thing”技术博客中，通过解读Alt+Tab窗口切换机制，阐述了微软保留旧界面的初衷。当时，Windows 3.1推出了名为“快速任务切换”的新版Alt+Tab功能，但**微软并未强行要求所有用户立即接受这一改变**，而是在控制面板中保留了开关选项，允许用户随时退回Windows 3.0及更早版本的切换模式。微软当时之所以花费精力维护旧界面，核心在于照顾大型企业用户的需求。**对于拥有数万名员工的企业而言，用户界面的剧烈变更意味着巨大的员工重新培训成本**。为此，微软采取了“设立过渡桥梁”的策略，在新",
+      "url": "https://bbs.deepin.org/post/300695"
+    },
+    {
+      "thread_id": 300686,
+      "post_id": 1804266,
+      "forum_id": 236,
+      "user_id": 295509,
+      "is_first": 1,
+      "matched": [
+        "pdf",
+        "PDF"
+      ],
+      "text": "说明：论坛中有几个大佬已经做了类似的svn/git插件，刚开始我用这个大佬开发的插件[https://bbs.deepin.org/post/296356](https://bbs.deepin.org/post/296356) ，他集成了老牌的图形化版本控制工具[RabbitVCS]，当时很高兴，很感谢，后来用久了感觉RabbitVCS界面有些老，svn的很多功能我也用不上，我主要使用›svn，基本上就是更新和提交，平常不使用›git。今天休闲，用小U同学原生开发了一个，碰巧赶上这个活动，就来参加一下。（也是我第一次使用›gitee仓库😂 ） 项目中也有【VCS插件功能需求模板.md】文件，",
+      "url": "https://bbs.deepin.org/post/300686"
+    },
+    {
+      "thread_id": 300676,
+      "post_id": 1804202,
+      "forum_id": 5,
+      "user_id": 290812,
+      "is_first": 1,
+      "matched": [
+        "print",
+        "Print",
+        "cups",
+        "CUPS"
+      ],
+      "text": "Dear Community Friends, This update brings multiple feature optimizations and bug fixes. It specifically addresses issues that occurred during the initial release of deepin 25.2.1, including update failures for some users, browser printing failures, inability to empty the Trash, and system tray font",
+      "url": "https://bbs.deepin.org/post/300676"
+    },
+    {
+      "thread_id": 300675,
+      "post_id": 1804189,
+      "forum_id": 5,
+      "user_id": 290812,
+      "is_first": 1,
+      "matched": [
+        "打印",
+        "cups",
+        "CUPS"
+      ],
+      "text": "![以用为本.png](https://storage.deepin.org/thread/202608100811134274_以用为本.png) 亲爱的 deepin 社区伙伴们： deepin 25.2.1 更新来啦！本次更新包含多项功能优化与问题修复，重点修复 [deepin 25.2.1 首次发布](https://bbs.deepin.org/post/300431) 时出现的部分用户更新失败、浏览器打印失败、回收站无法清空以及托盘字体大小不跟随系统等问题，同时修复了其它文件管理与搜索、DDE、磐石系统、基础组件及安全漏洞相关bug。欢迎deepin社区的朋友们以及感兴趣的开源爱好",
+      "url": "https://bbs.deepin.org/post/300675"
+    },
+    {
+      "thread_id": 300665,
+      "post_id": 1804135,
+      "forum_id": 236,
+      "user_id": 271943,
+      "is_first": 1,
+      "matched": [
+        "扫描"
+      ],
+      "text": "各位 deepin 社区的小伙伴们 前段时间deepin（深度）社区开源了 **deepin Skills** 项目（[GitHub - linuxdeepin/deepin-skills · GitHub](https://github.com/linuxdeepin/deepin-skills)[），](https://github.com/linuxdeepin/deepin-skills%EF%BC%89%EF%BC%8C%E7%9B%AE%E5%89%8D%E5%86%85%E7%BD%AE%E5%9B%9B%E5%A4%A7%E6%A0%B8%E5%BF%83%E6%8A%80%E",
+      "url": "https://bbs.deepin.org/post/300665"
+    },
+    {
+      "thread_id": 300634,
+      "post_id": 1803987,
+      "forum_id": 233,
+      "user_id": 326374,
+      "is_first": 0,
+      "matched": [
+        "打印",
+        "打印机"
+      ],
+      "text": "如果能解决几个问题，很多新人会拿来办公的。 驱动：打印机、显卡、无线网卡。 安装教程：图形化教程，驱动安装思路。 windows安装配置工具：windows环境下依据电脑配置提供Linux系统安装方法--安装包架构、刻录工具、分区建议（方案）、注意事项。 如果驱动安装，能在系统安装时选择。那就基本实现了开机即用了。 原因：很多人没有linux系统基础，甚至没见过。用习惯了傻瓜式的WINDOWS操作逻辑。 效果：开装即可用。",
+      "url": "https://bbs.deepin.org/post/300634"
+    },
+    {
+      "thread_id": 300632,
+      "post_id": 1803979,
+      "forum_id": 223,
+      "user_id": 317742,
+      "is_first": 1,
+      "matched": [
+        "print",
+        "Print"
+      ],
+      "text": "在系统设置声音里面，提示 没有找到声音输入设备，但是，声卡其实是好的； 我切换到 PulseAudio 就可以正常的录音，也可以正常播放声音，但是这种情况下，系统设置里面，整个声音页面都是空白的，无法使用系统的调整音量。 顺便补充下，alsamixer的Capture视图 在pipewire的情况下，input source总是被自动重置为Mic，但是切换到Mic 1 才是录音的 系统25.2.1 内核6.18.38-amd64-desktop-rolling (系统的关于本机不能加个复制吗，很不方便啊) 以下是设备管理器的复制内容 制造商 : ASRock 芯片组 : ASRock Inco",
+      "url": "https://bbs.deepin.org/post/300632"
+    },
+    {
+      "thread_id": 300623,
+      "post_id": 1803883,
+      "forum_id": 7,
+      "user_id": 223313,
+      "is_first": 1,
+      "matched": [
+        "扫描"
+      ],
+      "text": "由于Linux下的无线网卡驱动常常缺少 Wifi Direct 支持，所以常规的 Miracast 经常不可用 为了改善这个情况，我突发奇想，用 ffmpeg 给 DLNA 推流，是否可以实现通过 DLNA 投屏呢？ 最终成功了，向大家介绍： GXDE DLNA Caster ！ ![1786195784138.png](https://storage.deepin.org/thread/202608081403462531_1786195784138.png) 支持投屏桌面或者本地媒体文件，会扫描所有的网卡，这样本地挂梯子或者Tailscale也不用担心找错了网卡识别不到投屏设备了 开源地址",
+      "url": "https://bbs.deepin.org/post/300623"
+    },
+    {
+      "thread_id": 300620,
+      "post_id": 1803853,
+      "forum_id": 233,
+      "user_id": 324354,
+      "is_first": 0,
+      "matched": [
+        "打印",
+        "打印机"
+      ],
+      "text": "如果能解决几个问题，很多新人会拿来办公的。 驱动：打印机、显卡、无线网卡。 安装教程：图形化教程，驱动安装思路。 windows安装配置工具：windows环境下依据电脑配置提供Linux系统安装方法--安装包架构、刻录工具、分区建议（方案）、注意事项。 如果驱动安装，能在系统安装时选择。那就基本实现了开机即用了。 原因：很多人没有linux系统基础，甚至没见过。用习惯了傻瓜式的WINDOWS操作逻辑。",
+      "url": "https://bbs.deepin.org/post/300620"
+    },
+    {
+      "thread_id": 300553,
+      "post_id": 1803771,
+      "forum_id": 228,
+      "user_id": 330193,
+      "is_first": 0,
+      "matched": [
+        "扫描"
+      ],
+      "text": "大佬，我扫描的就是A4的文件哦，预计什么时候能修复呀？很期待😃",
+      "url": "https://bbs.deepin.org/post/300553"
+    },
+    {
+      "thread_id": 300580,
+      "post_id": 1803640,
+      "forum_id": 221,
+      "user_id": 306222,
+      "is_first": 1,
+      "matched": [
+        "print",
+        "Print"
+      ],
+      "text": "# 记一次 Deepin 25 搜狗输入法挂掉的排查 前两天手贱升级了下系统，搜狗就嗝屁了。Ctrl+Space 没反应、点托盘图标也没用，只能打英文。查了一圈发现其实就一个烂坑，顺手记一下。 环境：Deepin 25, fcitx5, sogou-ime-ng 10.0.10, X11。 --- ## 先看下进程和配置 **bash****复制** ```bash ps aux | grep -E 'fcitx5|cpis' | grep -v grep cat ~/.config/fcitx5/profile ``` 搜狗新一代（sogou-ime-ng）拆成了几个独立进程： ``` cp",
+      "url": "https://bbs.deepin.org/post/300580"
+    },
+    {
+      "thread_id": 300555,
+      "post_id": 1803506,
+      "forum_id": 223,
+      "user_id": 298408,
+      "is_first": 0,
+      "matched": [
+        "打印",
+        "cups",
+        "CUPS"
+      ],
+      "text": "打印服务CUPS有些问题导致浏览器打印失效，已经修了，这两天会安排推送",
+      "url": "https://bbs.deepin.org/post/300555"
+    },
+    {
+      "thread_id": 300507,
+      "post_id": 1803430,
+      "forum_id": 234,
+      "user_id": 298408,
+      "is_first": 0,
+      "matched": [
+        "打印",
+        "cups",
+        "CUPS"
+      ],
+      "text": "打印服务CUPS有些问题导致浏览器打印失效，已经修了，这两天会安排推送",
+      "url": "https://bbs.deepin.org/post/300507"
+    },
+    {
+      "thread_id": 286282,
+      "post_id": 1803342,
+      "forum_id": 223,
+      "user_id": 275621,
+      "is_first": 0,
+      "matched": [
+        "打印",
+        "扫描"
+      ],
+      "text": "主要是bisheng属于转译，达不到原厂驱动的功能的，能实现基本打印就很不错了。 另外，看能否反馈下联想M7650DF使用pcl5c或者pcl5e可用功能如何？比如提到的双面，以及扫描、复印功能。 :applaud:",
+      "url": "https://bbs.deepin.org/post/286282"
+    },
+    {
+      "thread_id": 298294,
+      "post_id": 1803172,
+      "forum_id": 116,
+      "user_id": 330170,
+      "is_first": 0,
+      "matched": [
+        "打印"
+      ],
+      "text": "![截图_选择区域_20260805150606.png](https://storage.deepin.org/thread/202608050744031013_截图_选择区域_20260805150606.png) 但是页面有问题，无法显示全部，且打印也不行，打印出来全是空白的。请问该怎么解决呢？",
+      "url": "https://bbs.deepin.org/post/298294"
+    },
+    {
+      "thread_id": 300508,
+      "post_id": 1803137,
+      "forum_id": 223,
+      "user_id": 122398,
+      "is_first": 1,
+      "matched": [
+        "pdf",
+        "PDF"
+      ],
+      "text": "系统信息： ``` highgo@highgo-pc:~$ fastfetch ............ highgo@highgo-pc .';;;;;. .,;,. ---------------- .,;;;;;;;. ';;;;;;;. OS: Deepin 25 x86_64 .;::::::::' .,::;;,''''',. Host: 21M7A001CD (ThinkPad E14 Gen 6) ,'.:::::::: .;;'. '; Kernel: Linux 6.18.38-amd64-desktop-rolling ;' 'cccccc, ,' :: '.. .: U",
+      "url": "https://bbs.deepin.org/post/300508"
+    },
+    {
+      "thread_id": 300499,
+      "post_id": 1803068,
+      "forum_id": 5,
+      "user_id": 290812,
+      "is_first": 1,
+      "matched": [
+        "cups",
+        "CUPS"
+      ],
+      "text": "![以用为本.png](https://storage.deepin.org/thread/20260804081628216_以用为本.png) ## **📈 7 月社区数据总览** ![截图_选择区域_20260803105759.png](https://storage.deepin.org/thread/202608040817342235_截图_选择区域_20260803105759.png) ## 🥂 社区产品 ### deepin 25.2.0 镜像发布：Treeland 可用性提升 · 文管支持文字搜图 7月8日，[deepin 25.2.0 版本镜像正式发布](https:/",
+      "url": "https://bbs.deepin.org/post/300499"
+    },
+    {
+      "thread_id": 300473,
+      "post_id": 1803021,
+      "forum_id": 7,
+      "user_id": 256573,
+      "is_first": 0,
+      "matched": [
+        "pdf",
+        "PDF"
+      ],
+      "text": "最近github上这个离线PDF出来很多。",
+      "url": "https://bbs.deepin.org/post/300473"
+    },
+    {
+      "thread_id": 300482,
+      "post_id": 1802938,
+      "forum_id": 234,
+      "user_id": 295115,
+      "is_first": 1,
+      "matched": [
+        "扫描"
+      ],
+      "text": "现在定位到系统级的打包不匹配问题了，根源清晰： 最终诊断 问题根因（系统级）：Deepin 定制内核与 regulatory.db 的签名密钥不匹配。 - 内核 6.18.38-amd64-desktop-rolling（Deepin）强制要求签名（REQUIRE_SIGNED_REGDB=y） - 但你的 linux-firmware 其实是 Ubuntu 的包（...-0ubuntu1deepin15），wireless-regdb 是 Debian/Deepin 的包 - 两者的签名密钥对不上 → 内核拒绝加载 regulatory.db → 回退到 country 00 - count",
+      "url": "https://bbs.deepin.org/post/300482"
+    },
+    {
+      "thread_id": 300082,
+      "post_id": 1802872,
+      "forum_id": 7,
+      "user_id": 223941,
+      "is_first": 0,
+      "matched": [
+        "print",
+        "Print"
+      ],
+      "text": "奈斯奈斯啊 这下可以用gtk写和deepin风格一致的东东了 > 另外 gtk配合blueprint好像是真的简单，写东西飞快；而且blueprint的编译器就800多k（好像是）还自带lsp，可以直接接进编辑器的lsp插件就有补全了",
+      "url": "https://bbs.deepin.org/post/300082"
+    },
+    {
+      "thread_id": 300460,
+      "post_id": 1802779,
+      "forum_id": 236,
+      "user_id": 271943,
+      "is_first": 1,
+      "matched": [
+        "pdf",
+        "PDF",
+        "扫描"
+      ],
+      "text": "这次我们做了一个酝酿很久的功能 —— **全局知识库**，简单说就是让小U能直接“读懂”你电脑里的本地文件不再需要每次对话都手动上传。 ## 为什么做这个功能 内部调研和用户反馈里，排在前三的痛点一直是： 1. **文件散落难找** —— 本地文件夹层级深，记得内容不记得路径； 2. **资料无法联动** —— 多份文档要对比或归纳时，只能逐个打开复制粘贴给 AI； 3. **重复上传消耗耐心** —— 每次新对话都要重新拖拽文件，思路容易断。 所以我们想，能不能让 AI 直接挂载本地文件系统，像搜索引擎一样随时提问、即时回答，同时保留隐私控制权。 ## 核心功能点 ### 1. 全局自动接入",
+      "url": "https://bbs.deepin.org/post/300460"
+    },
+    {
+      "thread_id": 300456,
+      "post_id": 1802750,
+      "forum_id": 7,
+      "user_id": 30417,
+      "is_first": 1,
+      "matched": [
+        "扫描"
+      ],
+      "text": "有时遇到电脑没有音频输入输出设备，而恰好需要时（比如台式电脑上的视频会议），别着急别慌，这款软件可以帮你，AudioRelay可将手机变成电脑的无线扬声器或麦克风，支持Windows/Linux/macOS/Android/HarmonyOS。 官网：[https://audiorelay.net/](https://audiorelay.net/) 手机电脑端安装软件后，只需简单连接(WiFi/USB)，配对即可实现音频连接，原理：电脑端创建虚拟扬声器和麦克风，与手机端数据交互。 1.手机作为扬声器 手机电脑连接同一网络，点选服务器即可 ![ScreenShot_2026-08-04_115",
+      "url": "https://bbs.deepin.org/post/300456"
+    },
+    {
+      "thread_id": 300438,
+      "post_id": 1802646,
+      "forum_id": 228,
+      "user_id": 328925,
+      "is_first": 1,
+      "matched": [
+        "扫描"
+      ],
+      "text": "![](https://gitee.com/GXDE-OS/gxde-wlcom/raw/gxde/zhuangzhuang/docs/img/readme-header.png)![](https://gitee.com/GXDE-OS/gxde-wlcom/raw/gxde/zhuangzhuang/docs/img/readme-header.png) ![readme-header.png](https://storage.deepin.org/thread/202608031817369615_readme-header.png) [Gitee上的GXWM](https://gite",
+      "url": "https://bbs.deepin.org/post/300438"
+    },
+    {
+      "thread_id": 300432,
+      "post_id": 1802601,
+      "forum_id": 5,
+      "user_id": 290812,
+      "is_first": 1,
+      "matched": [
+        "pdf",
+        "PDF",
+        "print",
+        "Print",
+        "cups",
+        "CUPS"
+      ],
+      "text": "Dear Community Friends, The deepin 25.2.1 update is here! This update includes multiple feature optimizations and bug fixes, focusing on file management and search, DDE desktop experience, system upgrade reliability, common application compatibility, and system security.We welcome all deepin communi",
+      "url": "https://bbs.deepin.org/post/300432"
+    },
+    {
+      "thread_id": 300431,
+      "post_id": 1802600,
+      "forum_id": 5,
+      "user_id": 290812,
+      "is_first": 1,
+      "matched": [
+        "打印",
+        "pdf",
+        "PDF",
+        "cups",
+        "CUPS",
+        "扫描"
+      ],
+      "text": "![以用为本.png](https://storage.deepin.org/thread/202607310801057983_以用为本.png) 亲爱的 deepin 社区伙伴们： deepin 25.2.1 更新来啦！本次更新包含多项功能优化与问题修复，重点提升文件管理与搜索、DDE 桌面体验、系统升级可靠性、常用应用兼容性及系统安全性。欢迎deepin社区的朋友们以及感兴趣的开源爱好者们更新最新的系统，积极反馈问题！也欢迎大家在评论区热情讨论，发表自己的观点与感受，谢谢大家！ --- ## 🚀 deepin 25.2.1 版本亮点速览 ● **智能搜索能力上线**：文件管理器和全局搜索",
+      "url": "https://bbs.deepin.org/post/300431"
+    }
+  ]
+}

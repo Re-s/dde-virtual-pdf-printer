@@ -1,0 +1,22 @@
+# 构建产物
+build/
+*.o
+*.a
+*.so
+
+# Python
+__pycache__/
+*.pyc
+
+# 打包产物
+*.deb
+debian/deepin-pdf-printer/
+
+# 临时文件
+*.log
+/tmp/
+
+# 编辑器
+.vscode/
+.idea/
+*.swp

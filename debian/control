@@ -1,0 +1,14 @@
+Package: deepin-pdf-printer
+Version: 0.5.4
+Section: utils
+Priority: optional
+Architecture: amd64
+Maintainer: Deepin PDF Printer Developers <dev@example.com>
+Depends: cups, cups-filters, ghostscript, dde-control-center
+Description: Deepin virtual PDF printer (CUPS backend + control center plugin)
+ Provides a virtual PDF printer for Deepin desktop, similar to
+ "Microsoft Print to PDF" on Windows. Includes a CUPS backend
+ and a DDE control center plugin for management. After
+ installation, a "Deepin-PDF" printer is available in any
+ application's print dialog, and generated PDF files are saved
+ to the user's ~/PDF directory.

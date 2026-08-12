@@ -1,0 +1,155 @@
+#!/usr/bin/env python3
+"""deepin-pdf — CUPS 虚拟 PDF 打印机 backend（POC 版）
+
+CUPS backend 调用约定:
+    backend job user title num-copies options [filename]
+数据从 filename 或 stdin 读取（CUPS 过滤器链已转换为 PDF）。
+
+行为:
+    - 将接收到的 PDF 数据写入 <用户主目录>/PDF/ 目录
+    - 文件名: <title>-<jobid>-<时间戳>.pdf
+    - 兼容 CUPS 的 discover 模式（无参数时输出设备信息）
+
+部署位置: /usr/lib/cups/backend/deepinpdf
+"""
+import os
+import sys
+import time
+import pwd
+import shlex
+import configparser
+
+
+def discover():
+    """CUPS 设备发现模式：无参数调用时打印支持的设备。"""
+    print('direct deepinpdf "Unknown" "Deepin PDF Virtual Printer"')
+    print('network deepinpdf "Unknown" "Deepin PDF Virtual Printer"')
+
+
+def sanitize_filename(name: str, max_len: int = 60) -> str:
+    """清洗文件名，去掉路径分隔符和特殊字符。"""
+    name = os.path.basename(name or 'print')
+    keep = []
+    for ch in name:
+        if ch.isalnum() or ch in '._- ':
+            keep.append(ch)
+    cleaned = ''.join(keep).strip()
+    if not cleaned:
+        cleaned = 'print'
+    return cleaned[:max_len]
+
+
+def get_output_dir(username: str) -> str:
+    """获取用户 PDF 输出目录（不存在则创建）。
+
+    backend 以 root 运行（权限 700），创建目录后 chown 给目标用户，
+    确保用户可访问。目录已存在时（如用户手建）仅校正属主。
+
+    优先读取控制中心插件的配置（QSettings ini 文件）中的 outputDir，
+    未配置时回退到 <用户主目录>/PDF/。
+    """
+    try:
+        pw = pwd.getpwnam(username)
+        home = pw.pw_dir
+        uid = pw.pw_uid
+        gid = pw.pw_gid
+    except KeyError:
+        home = os.path.expanduser('~')
+        uid = gid = -1
+
+    outdir = os.path.join(home, 'PDF')
+
+    # 读取控制中心插件写入的配置（QSettings NativeFormat = ini）
+    # 配置文件: ~/.config/org.deepin.dde.pdfprinter/pdfprinter.conf
+    conf_path = os.path.join(home, '.config', 'org.deepin.dde.pdfprinter', 'pdfprinter.conf')
+    try:
+        parser = configparser.ConfigParser()
+        with open(conf_path, encoding='utf-8') as f:
+            parser.read_file(f)
+        configured = parser.get('General', 'outputDir', fallback='').strip()
+        if configured:
+            # 展开 ~ 和变量（QSettings 存的是展开后的绝对路径，防御性处理）
+            configured = os.path.expanduser(os.path.expandvars(configured))
+            if os.path.isabs(configured):
+                outdir = configured
+    except (OSError, configparser.Error):
+        pass  # 配置缺失或损坏时回退默认目录
+
+    try:
+        os.makedirs(outdir, exist_ok=True)
+        if uid != -1:
+            os.chown(outdir, uid, gid)
+    except PermissionError:
+        # 目录不可访问时尝试用 su 切到用户创建（非 root 运行兜底）
+        import subprocess
+        subprocess.run(['su', '-s', '/bin/sh', '-c',
+                        f'mkdir -p {shlex.quote(outdir)}', username],
+                       check=False)
+    return outdir
+
+
+def main():
+    # CUPS 传递的参数（argv[0] 是设备 URI）
+    if len(sys.argv) < 2 or sys.argv[1] == '--help' or sys.argv[1] == '-h':
+        discover()
+        return 0
+
+    # 发现模式（单个参数或无参数时 CUPS 调用）
+    if len(sys.argv) == 1:
+        discover()
+        return 0
+
+    job_id = sys.argv[1]
+    username = sys.argv[2] if len(sys.argv) > 2 else 'unknown'
+    title = sys.argv[3] if len(sys.argv) > 3 else 'print'
+    copies = int(sys.argv[4]) if len(sys.argv) > 4 and sys.argv[4].isdigit() else 1
+    options = sys.argv[5] if len(sys.argv) > 5 else ''
+    filename = sys.argv[6] if len(sys.argv) > 6 else None
+
+    # 读取数据
+    if filename and os.path.exists(filename):
+        with open(filename, 'rb') as f:
+            data = f.read()
+    else:
+        data = sys.stdin.buffer.read()
+
+    if not data:
+        print(f'ERROR: empty print data for job {job_id}', file=sys.stderr)
+        return 1
+
+    # 剥离 PJL/JCL 包装头（PPD 的 JCLBegin/JCLToPDFInterpreter 指令），
+    # 直到遇到 %PDF 魔数为止。cups-pdf 后端同样处理此步骤。
+    pdf_start = data.find(b'%PDF')
+    if pdf_start > 0:
+        data = data[pdf_start:]
+
+    outdir = get_output_dir(username)
+    base = sanitize_filename(title)
+    # 毫秒级时间戳 + job_id 防同秒同名覆盖（strftime %f 在 Linux 不支持微秒，
+    # 用 time.time() 手动取毫秒）
+    now = time.time()
+    ts_sec = time.strftime('%Y%m%d-%H%M%S', time.localtime(now))
+    ts_ms = int((now - int(now)) * 1000)
+    outpath = os.path.join(outdir, f'{base}-{job_id}-{ts_sec}{ts_ms:03d}.pdf')
+
+    try:
+        with open(outpath, 'wb') as f:
+            f.write(data)
+    except OSError as e:
+        print(f'ERROR: 写入 PDF 失败: {e} (outdir={outdir})', file=sys.stderr)
+        return 1
+
+    # 文件属主给用户
+    try:
+        uid = pwd.getpwnam(username).pw_uid
+        gid = pwd.getpwnam(username).pw_gid
+        os.chown(outpath, uid, gid)
+    except (KeyError, PermissionError):
+        pass
+
+    print(f'PDF saved to {outpath}', file=sys.stderr)
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())

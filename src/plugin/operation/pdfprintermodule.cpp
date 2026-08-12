@@ -1,0 +1,421 @@
+// SPDX-FileCopyrightText: 2026 UnionTech Software Technology Co., Ltd.
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+#include "pdfprintermodule.h"
+
+#include <QCoreApplication>
+#include <QDateTime>
+#include <QDBusConnection>
+#include <QDBusInterface>
+#include <QDBusObjectPath>
+#include <QDBusReply>
+#include <QDesktopServices>
+#include <QDir>
+#include <QFileInfo>
+#include <QUrl>
+#include <QVariantList>
+#include <QVariantMap>
+
+#include <algorithm>
+
+#include "../../service/printermanager.h"
+#include "../../service/configmanager.h"
+#include "../../service/outputdirwatcher.h"
+
+#include "dccfactory.h"
+
+namespace {
+
+// Human-readable file size: 523 B, 12.5 KB, 3.42 MB, ...
+QString formatFileSize(qint64 bytes)
+{
+    if (bytes < 1024) {
+        return QStringLiteral("%1 B").arg(bytes);
+    }
+    if (bytes < 1024 * 1024) {
+        return QStringLiteral("%1 KB").arg(QString::number(bytes / 1024.0, 'f', 1));
+    }
+    if (bytes < 1024LL * 1024 * 1024) {
+        return QStringLiteral("%1 MB").arg(QString::number(bytes / (1024.0 * 1024.0), 'f', 2));
+    }
+    return QStringLiteral("%1 GB").arg(QString::number(bytes / (1024.0 * 1024.0 * 1024.0), 'f', 2));
+}
+
+} // namespace
+
+// PIMPL: compose the service layer. Impl is parented to the module itself,
+// and every service object is parented to Impl, so all child objects created
+// in the constructor share the module's thread affinity (DccFactory::create()
+// may run on a worker thread; parentless QObjects would leak / misbehave).
+class PdfPrinterModule::Impl : public QObject
+{
+public:
+    explicit Impl(PdfPrinterModule *q)
+        : QObject(q)
+        , configManager(new ConfigManager(this))
+        , printerManager(new PrinterManager(configManager, this))
+        , watcher(new OutputDirWatcher(this))
+    {
+        // Relay printer state changes to the module.
+        connect(printerManager, &PrinterManager::printerStateChanged,
+                q, &PdfPrinterModule::printerStateChanged);
+        // Keep the pdf file cache in sync whenever the service notices changes.
+        connect(printerManager, &PrinterManager::pdfFilesChanged,
+                q, &PdfPrinterModule::refreshPdfList);
+        // Relay config changes and re-arm the watcher for the new directory.
+        connect(configManager, &ConfigManager::outputDirChanged, this, [this, q]() {
+            watcher->watch(configManager->outputDir());
+            Q_EMIT q->outputDirChanged();
+            q->refreshPdfList();
+        });
+        connect(configManager, &ConfigManager::autoOpenChanged,
+                q, &PdfPrinterModule::autoOpenChanged);
+        // Directory content changed (new PDF printed, file removed, ...).
+        connect(watcher, &OutputDirWatcher::filesChanged,
+                q, &PdfPrinterModule::refreshPdfList);
+
+        // Snapshot the current file set as the diff baseline BEFORE the first
+        // refresh, so autoOpen only fires for files that appear afterwards and
+        // never re-opens pre-existing PDFs on the initial load.
+        // NOTE: cannot call q->refreshPdfList() here -- q->d is not yet
+        // assigned during Impl construction, so populate our own cache instead.
+        lastFiles = printerManager->listPdfFiles();
+        pdfFiles = lastFiles;
+
+        // Start watching the configured output directory.
+        watcher->watch(configManager->outputDir());
+    }
+
+    PrinterManager *printerManager;
+    ConfigManager *configManager;
+    OutputDirWatcher *watcher;
+
+    QStringList pdfFiles;   // cached file name list, refreshed by refreshPdfList()
+    QStringList lastFiles;  // previous snapshot used to diff newly added files
+    QString lastError;
+    QString dialogPath;     // 当前打开的 D-Bus 文件对话框路径（空 = 无）
+    bool busy = false;
+};
+
+PdfPrinterModule::PdfPrinterModule(QObject *parent)
+    : QObject(parent)
+    , d(new Impl(this))
+{
+}
+
+bool PdfPrinterModule::printerExists() const
+{
+    return d->printerManager->printerExists();
+}
+
+QString PdfPrinterModule::printerName() const
+{
+    return d->printerManager->printerName();
+}
+
+QString PdfPrinterModule::outputDir() const
+{
+    return d->configManager->outputDir();
+}
+
+void PdfPrinterModule::setOutputDir(const QString &dir)
+{
+    d->configManager->setOutputDir(dir);
+}
+
+bool PdfPrinterModule::autoOpen() const
+{
+    return d->configManager->autoOpen();
+}
+
+void PdfPrinterModule::setAutoOpen(bool open)
+{
+    d->configManager->setAutoOpen(open);
+}
+
+QStringList PdfPrinterModule::pdfFiles() const
+{
+    return d->pdfFiles;
+}
+
+bool PdfPrinterModule::busy() const
+{
+    return d->busy;
+}
+
+QString PdfPrinterModule::lastError() const
+{
+    return d->lastError;
+}
+
+bool PdfPrinterModule::createPrinter()
+{
+    if (!d->busy) {
+        d->busy = true;
+        Q_EMIT busyChanged();
+    }
+    const bool ok = d->printerManager->createPrinter();
+    if (d->busy) {
+        d->busy = false;
+        Q_EMIT busyChanged();
+    }
+    if (ok) {
+        d->lastError.clear();
+        Q_EMIT lastErrorChanged();
+        refreshPdfList();
+    } else {
+        d->lastError = QStringLiteral("create failed: 打印机创建失败，请检查 CUPS 服务状态与用户权限");
+        Q_EMIT lastErrorChanged();
+    }
+    return ok;
+}
+
+bool PdfPrinterModule::removePrinter()
+{
+    if (!d->busy) {
+        d->busy = true;
+        Q_EMIT busyChanged();
+    }
+    const bool ok = d->printerManager->removePrinter();
+    if (d->busy) {
+        d->busy = false;
+        Q_EMIT busyChanged();
+    }
+    if (ok) {
+        d->lastError.clear();
+        Q_EMIT lastErrorChanged();
+        refreshPdfList();
+    } else {
+        d->lastError = QStringLiteral("remove failed: 打印机删除失败，请检查用户权限");
+        Q_EMIT lastErrorChanged();
+    }
+    return ok;
+}
+
+void PdfPrinterModule::refreshPdfList()
+{
+    const QStringList files = d->printerManager->listPdfFiles();
+
+    // Diff against the previous snapshot to find newly added PDFs (name-set
+    // difference), so autoOpen never re-opens files on plain refreshes.
+    QStringList newFiles;
+    for (const QString &file : files) {
+        if (!d->lastFiles.contains(file)) {
+            newFiles.append(file);
+        }
+    }
+    d->lastFiles = files;
+
+    if (files != d->pdfFiles) {
+        d->pdfFiles = files;
+        Q_EMIT pdfFilesChanged();
+    }
+
+    // Auto-open only genuinely new files when the feature is enabled.
+    if (d->configManager->autoOpen() && !newFiles.isEmpty()) {
+        const QDir dir(d->configManager->outputDir());
+        for (const QString &file : newFiles) {
+            const QString filePath = dir.filePath(file);
+            if (QDesktopServices::openUrl(QUrl::fromLocalFile(filePath))) {
+                Q_EMIT pdfAutoOpened(filePath);
+            }
+        }
+    }
+}
+
+QVariantList PdfPrinterModule::pdfFileDetails() const
+{
+    const QDir dir(d->configManager->outputDir());
+    if (!dir.exists()) {
+        return {};
+    }
+    // Scan the output directory directly (same filter as the service layer)
+    // and sort by last-modified time, newest first.
+    QStringList names = dir.entryList({ QStringLiteral("*.pdf") }, QDir::Files, QDir::Name);
+    std::sort(names.begin(), names.end(), [&dir](const QString &a, const QString &b) {
+        return QFileInfo(dir.filePath(a)).lastModified() > QFileInfo(dir.filePath(b)).lastModified();
+    });
+    QVariantList details;
+    details.reserve(names.size());
+    for (const QString &name : names) {
+        const QFileInfo fi(dir.filePath(name));
+        QVariantMap map;
+        map.insert(QStringLiteral("name"), name);
+        map.insert(QStringLiteral("size"), fi.size());
+        map.insert(QStringLiteral("sizeText"), formatFileSize(fi.size()));
+        map.insert(QStringLiteral("mtimeText"),
+                   fi.lastModified().toString(QStringLiteral("yyyy-MM-dd hh:mm")));
+        map.insert(QStringLiteral("path"), fi.absoluteFilePath());
+        details.append(map);
+    }
+    return details;
+}
+
+bool PdfPrinterModule::openOutputDir()
+{
+    const bool ok = d->printerManager->openOutputDir();
+    if (!ok) {
+        d->lastError = QStringLiteral("open dir failed: 无法打开输出目录");
+        Q_EMIT lastErrorChanged();
+    }
+    return ok;
+}
+
+bool PdfPrinterModule::openPdfFile(int index)
+{
+    if (index < 0 || index >= d->pdfFiles.size()) {
+        d->lastError = QStringLiteral("invalid index: 文件索引超出范围");
+        Q_EMIT lastErrorChanged();
+        return false;
+    }
+    const bool ok = d->printerManager->openPdfFile(d->pdfFiles.at(index));
+    if (!ok) {
+        d->lastError = QStringLiteral("open failed: 无法打开 PDF 文件");
+        Q_EMIT lastErrorChanged();
+    }
+    return ok;
+}
+
+bool PdfPrinterModule::deletePdfFile(int index)
+{
+    if (index < 0 || index >= d->pdfFiles.size()) {
+        d->lastError = QStringLiteral("invalid index: 文件索引超出范围");
+        Q_EMIT lastErrorChanged();
+        return false;
+    }
+    const bool ok = d->printerManager->deletePdfFile(d->pdfFiles.at(index));
+    if (ok) {
+        d->lastError.clear();
+        Q_EMIT lastErrorChanged();
+        refreshPdfList();
+    } else {
+        d->lastError = QStringLiteral("delete failed: 无法删除 PDF 文件");
+        Q_EMIT lastErrorChanged();
+    }
+    return ok;
+}
+
+QString PdfPrinterModule::defaultOutputDir()
+{
+    return QDir::homePath() + QStringLiteral("/PDF");
+}
+
+void PdfPrinterModule::openOutputDirPicker()
+{
+    // dde-control-center 是纯 QML 应用（QGuiApplication），不能使用
+    // QFileDialog（QtWidgets 模块）——会因无 QApplication 直接崩溃。
+    // 方案：通过 D-Bus 调用 deepin 官方文件对话框服务
+    // com.deepin.filemanager.filedialog 的目录选择模式。
+    // 异步实现：show() 后立即返回，selectedUrls/rejected 信号通过
+    // onDialogUrls/onDialogRejected 回调，结果经 outputDirPicked 发出。
+    // （不能用 QEventLoop 阻塞——控制中心主线程被占会导致死锁）
+    QDBusConnection bus = QDBusConnection::sessionBus();
+    const QString managerService = QStringLiteral("com.deepin.filemanager.filedialog");
+    const QString managerPath = QStringLiteral("/com/deepin/filemanager/filedialogmanager");
+
+    // 若已有对话框打开，先关闭旧的
+    if (!d->dialogPath.isEmpty()) {
+        QDBusInterface oldDlg(managerService, d->dialogPath,
+                              QStringLiteral("com.deepin.filemanager.filedialog"), bus);
+        oldDlg.call(QStringLiteral("reject"));
+        d->dialogPath.clear();
+    }
+
+    // 1. 创建对话框
+    QDBusInterface manager(managerService, managerPath,
+                           QStringLiteral("com.deepin.filemanager.filedialogmanager"), bus);
+    if (!manager.isValid()) {
+        d->lastError = QStringLiteral("文件对话框服务不可用");
+        Q_EMIT lastErrorChanged();
+        return;
+    }
+    // key 必须是纯字母数字（dde-file-dialog 对象路径限制，连字符会导致 NoReply）
+    const QString key = QStringLiteral("pdfprinter%1").arg(QCoreApplication::applicationPid());
+    QDBusReply<QDBusObjectPath> reply = manager.call(QStringLiteral("createDialog"), key);
+    if (!reply.isValid()) {
+        d->lastError = QStringLiteral("创建文件对话框失败: %1").arg(reply.error().message());
+        Q_EMIT lastErrorChanged();
+        return;
+    }
+    const QString dialogPath = reply.value().path();
+
+    // 2. 连接信号（不阻塞；信号到达时通过槽回调）
+    // 注意：selectedUrls 是方法不是信号！真正的信号是 accepted/rejected，
+    // accepted 后需调用 selectedUrls 方法获取结果。
+    bus.connect(managerService, dialogPath,
+                QStringLiteral("com.deepin.filemanager.filedialog"),
+                QStringLiteral("accepted"),
+                this, SLOT(onDialogAccepted()));
+    bus.connect(managerService, dialogPath,
+                QStringLiteral("com.deepin.filemanager.filedialog"),
+                QStringLiteral("rejected"),
+                this, SLOT(onDialogRejected()));
+
+    // 3. 配置为目录选择模式并显示
+    QDBusInterface dlg(managerService, dialogPath,
+                       QStringLiteral("com.deepin.filemanager.filedialog"), bus);
+    if (!dlg.isValid()) {
+        manager.call(QStringLiteral("destroyDialog"), QVariant::fromValue(QDBusObjectPath(dialogPath)));
+        return;
+    }
+    dlg.setProperty("acceptMode", QVariant::fromValue(0));        // AcceptOpen
+    dlg.call(QStringLiteral("setFileMode"), 2);                    // QFileDialog::Directory
+    dlg.call(QStringLiteral("setWindowTitle"), QStringLiteral("选择 PDF 输出目录"));
+    dlg.setProperty("directoryUrl",
+                    QVariant::fromValue(QUrl::fromLocalFile(d->configManager->outputDir()).toString()));
+    d->dialogPath = dialogPath;
+    dlg.call(QStringLiteral("show"));
+}
+
+void PdfPrinterModule::onDialogAccepted()
+{
+    // 用户确认选择（accepted 信号）——调用 selectedUrls 方法获取结果
+    QString chosen;
+    const QString managerService = QStringLiteral("com.deepin.filemanager.filedialog");
+    if (!d->dialogPath.isEmpty()) {
+        QDBusInterface dlg(managerService, d->dialogPath,
+                           QStringLiteral("com.deepin.filemanager.filedialog"),
+                           QDBusConnection::sessionBus());
+        QDBusReply<QStringList> urls = dlg.call(QStringLiteral("selectedUrls"));
+        if (urls.isValid() && !urls.value().isEmpty()) {
+            chosen = QUrl(urls.value().first()).toLocalFile();
+        }
+    }
+    cleanupDialog();
+    Q_EMIT outputDirPicked(chosen);
+}
+
+void PdfPrinterModule::onDialogRejected()
+{
+    // 用户取消（rejected 信号）
+    cleanupDialog();
+    Q_EMIT outputDirPicked(QString());
+}
+
+void PdfPrinterModule::cleanupDialog()
+{
+    if (d->dialogPath.isEmpty()) {
+        return;
+    }
+    const QString managerService = QStringLiteral("com.deepin.filemanager.filedialog");
+    const QString managerPath = QStringLiteral("/com/deepin/filemanager/filedialogmanager");
+    QDBusConnection bus = QDBusConnection::sessionBus();
+
+    bus.disconnect(managerService, d->dialogPath,
+                   QStringLiteral("com.deepin.filemanager.filedialog"),
+                   QStringLiteral("accepted"),
+                   this, SLOT(onDialogAccepted()));
+    bus.disconnect(managerService, d->dialogPath,
+                   QStringLiteral("com.deepin.filemanager.filedialog"),
+                   QStringLiteral("rejected"),
+                   this, SLOT(onDialogRejected()));
+
+    QDBusInterface manager(managerService, managerPath,
+                           QStringLiteral("com.deepin.filemanager.filedialogmanager"), bus);
+    manager.call(QStringLiteral("destroyDialog"), QVariant::fromValue(QDBusObjectPath(d->dialogPath)));
+    d->dialogPath.clear();
+}
+
+// Register the plugin factory (dccfactory.h); generates PdfPrinterModuleDccFactory.
+DCC_FACTORY_CLASS(PdfPrinterModule)
+#include "pdfprintermodule.moc"

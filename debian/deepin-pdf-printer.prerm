@@ -1,0 +1,16 @@
+#!/bin/sh
+# deepin-pdf-printer prerm — 卸载前删除 CUPS 虚拟打印机
+# 失败忽略（不阻断卸载）
+set -e
+
+PRINTER="Deepin-PDF"
+LPADMIN=/usr/sbin/lpadmin
+
+# 仅处理 remove/purge 动作（升级时不删打印机）
+if [ "$1" = "remove" ] || [ "$1" = "purge" ]; then
+    # 打印机不存在时 lpadmin -x 会报错，忽略即可
+    $LPADMIN -x "$PRINTER" 2>/dev/null || true
+    echo "deepin-pdf-printer: 已删除打印机 $PRINTER（如存在）" >&2
+fi
+
+exit 0

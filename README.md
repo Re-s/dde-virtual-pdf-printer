@@ -21,7 +21,13 @@
 
 ## 🖼️ 截图
 
-（截图见 `docs/screenshots/`，后补）
+| 打印机状态 | PDF 文件列表 |
+| --- | --- |
+| ![状态](docs/screenshots/01-status.png) | ![文件列表](docs/screenshots/02-files.png) |
+
+| 设置 | 帮助 |
+| --- | --- |
+| ![设置](docs/screenshots/03-settings.png) | ![帮助](docs/screenshots/04-help.png) |
 
 ## 📦 安装
 

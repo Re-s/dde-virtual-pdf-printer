@@ -154,7 +154,7 @@ src/plugin/
 | 打印机创建时机 | 安装时 postinst + 插件内按钮 | 双保险 |
 | PPD | 系统自带 Generic-PDF_Printer-PDF.ppd | 无需自带 PPD，减少维护 |
 | 文件命名 | `<原文件名>-<jobid>-<时间戳>.pdf` | 避免重名覆盖 |
-| 权限模型 | lpadmin 用户级（lp 组）+ polkit 兜底 | master 已在 lp 组，无需 root |
+| 权限模型 | lpadmin 用户级（lp 组）+ polkit 兜底 | 普通用户加入 lp 组后即可，无需 root |
 | 插件语言 | C++ (DccObject) + QML | 控制中心 v25 标准架构 |
 
 ## 5. 目录结构（最终）

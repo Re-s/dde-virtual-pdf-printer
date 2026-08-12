@@ -13,12 +13,14 @@ ACCENT = (75, 165, 255)
 img = Image.new("RGB", (W, H), BG)
 d = ImageDraw.Draw(img)
 
-# 字体（尝试常见中文字体）
+# 字体（优先中文字体，确保中文渲染正常）
 def get_font(size):
-    for path in ["/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    for path in ["/usr/share/fonts/opentype/source-han-cjk/SourceHanSansSC-Medium.otf",
+                 "/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc",
                  "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
                  "/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc",
-                 "/usr/share/fonts/truetype/wqy/wqy-microhei.ttc"]:
+                 "/usr/share/fonts/truetype/wqy/wqy-microhei.ttc",
+                 "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"]:
         try:
             return ImageFont.truetype(path, size)
         except Exception:

@@ -43,13 +43,69 @@ sudo dpkg -i deepin-pdf-printer_*.deb
 
 ## 🔧 构建
 
+### 1. 编译环境安装（首次构建需要）
+
 ```bash
-# 1. 构建控制中心插件
+# 基础工具链
+sudo apt install -y build-essential cmake git
+
+# Qt6 开发包
+sudo apt install -y qt6-base-dev qt6-declarative-dev qt6-tools-dev linguist-qt6 libxkbcommon-dev
+
+# DTK6（deepin 应用框架）
+sudo apt install -y libdtk6core-dev libdtk6gui-dev libdtk6widget-dev
+
+# 控制中心插件开发包（提供 DCC_FACTORY_CLASS / dcc_install_plugin）
+sudo apt install -y dde-control-center-dev
+
+# 运行时依赖（backend + CUPS 打印链路）
+sudo apt install -y cups cups-filters ghostscript
+```
+
+> 注：deepin 25 的 `dde-control-center-dev` 提供 `dccfactory.h` 与 CMake 配置
+> （`find_package(DdeControlCenter)`）。若系统 curl 被沙箱 LD_LIBRARY_PATH 污染，
+> 用 `env -u LD_LIBRARY_PATH cmake ...` 构建。
+
+### 2. 构建插件
+
+```bash
+# 构建控制中心插件（QML 编译进 lib<name>_qml.so）
 cmake -S src/plugin -B build/integration -DCMAKE_INSTALL_PREFIX=/usr
 cmake --build build/integration -j$(nproc)
+```
 
-# 2. 打包 deb（backend + 插件 + 翻译 + 图标 + postinst）
-dpkg-deb --root-owner-group --build debian/deepin-pdf-printer deepin-pdf-printer_*.deb
+### 3. 打包 deb（backend + 插件 + 翻译 + 图标 + postinst）
+
+```bash
+# 组装安装目录
+sudo rm -rf debian/deepin-pdf-printer
+mkdir -p debian/deepin-pdf-printer/usr/lib/cups/backend \
+         debian/deepin-pdf-printer/usr/lib/x86_64-linux-gnu/dde-control-center/plugins_v1.1/pdfprinter \
+         debian/deepin-pdf-printer/usr/share/dde-control-center/translations/v1.1 \
+         debian/deepin-pdf-printer/usr/share/dsg/icons \
+         debian/deepin-pdf-printer/DEBIAN
+
+# backend（必须 700 root:root，CUPS 才以 root 运行）
+install -m 700 backend/deepinpdf debian/deepin-pdf-printer/usr/lib/cups/backend/deepinpdf
+
+# 插件（.so + QML + qmldir）
+cp build/integration/lib/plugins_v1.1/pdfprinter/*.so \
+   build/integration/lib/plugins_v1.1/pdfprinter/*.qml \
+   build/integration/lib/plugins_v1.1/pdfprinter/qmldir \
+   debian/deepin-pdf-printer/usr/lib/x86_64-linux-gnu/dde-control-center/plugins_v1.1/pdfprinter/
+
+# 翻译 + 图标
+cp src/plugin/translations/*.qm debian/deepin-pdf-printer/usr/share/dde-control-center/translations/v1.1/
+cp assets/icons/*.dci debian/deepin-pdf-printer/usr/share/dsg/icons/
+
+# 安装脚本（postinst 自动建打印机）
+cp debian/deepin-pdf-printer.postinst debian/deepin-pdf-printer/DEBIAN/postinst
+cp debian/deepin-pdf-printer.prerm    debian/deepin-pdf-printer/DEBIAN/prerm
+cp debian/deepin-pdf-printer.postrm   debian/deepin-pdf-printer/DEBIAN/postrm
+chmod 755 debian/deepin-pdf-printer/DEBIAN/post*
+
+# 打包（--root-owner-group 保证 ostree 只读系统可安装）
+dpkg-deb --root-owner-group --build debian/deepin-pdf-printer deepin-pdf-printer_0.5.4_amd64.deb
 ```
 
 **依赖**：`cups`、`cups-filters`、`ghostscript`、`dde-control-center`、Qt6（Core/DBus）、DTK6

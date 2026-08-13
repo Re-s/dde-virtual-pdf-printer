@@ -1,5 +1,5 @@
 #!/bin/sh
-# deepin-pdf-printer postrm — 卸载后清理
+# dde-pdf-printer postrm — 卸载后清理
 # purge 时删除配置目录（保留用户生成的 PDF 文件）
 set -e
 
@@ -13,7 +13,7 @@ if [ "$1" = "purge" ]; then
         # 仅删除空目录（若用户没文件）；有文件则保留
         rmdir "$d" 2>/dev/null || true
     done
-    echo "deepin-pdf-printer: 已清理配置（用户 PDF 文件保留）" >&2
+    echo "dde-pdf-printer: 已清理配置（用户 PDF 文件保留）" >&2
 fi
 
 exit 0

@@ -1,0 +1,39 @@
+#!/bin/sh
+# dde-pdf-printer postinst — 安装后自动创建 CUPS 虚拟打印机
+# 幂等：打印机已存在则跳过；失败不阻断 dpkg 安装（返回 0）
+set -e
+
+PRINTER="DDE-PDF"
+OLD_PRINTER="Deepin-PDF"
+LPADMIN=/usr/sbin/lpadmin
+LPSTAT=/usr/bin/lpstat
+PPD=/usr/share/ppd/cupsfilters/Generic-PDF_Printer-PDF.ppd
+
+# 检查 PPD 是否存在（cups-filters 未装时跳过）
+if [ ! -f "$PPD" ]; then
+    echo "dde-pdf-printer: PPD 不存在 ($PPD)，跳过打印机创建" >&2
+    exit 0
+fi
+
+# v0.8.0 迁移：检测旧打印机 Deepin-PDF（v0.7.x 及更早），删除并迁移到 DDE-PDF
+# （用户 PDF 文件不受影响；旧 backend 文件已被新包替换）
+if $LPSTAT -p "$OLD_PRINTER" >/dev/null 2>&1; then
+    echo "dde-pdf-printer: 检测到旧打印机 $OLD_PRINTER，迁移到 $PRINTER" >&2
+    $LPADMIN -x "$OLD_PRINTER" 2>/dev/null || true
+fi
+
+# 幂等：打印机已存在则不重复创建
+if $LPSTAT -p "$PRINTER" >/dev/null 2>&1; then
+    echo "dde-pdf-printer: 打印机 $PRINTER 已存在，跳过" >&2
+    exit 0
+fi
+
+# 创建打印机（backend 为 root 运行，直接 lpadmin 即可）
+if $LPADMIN -p "$PRINTER" -E -v ddepdf:/ -P "$PPD" 2>/dev/null; then
+    echo "dde-pdf-printer: 已创建打印机 $PRINTER" >&2
+else
+    # 创建失败不致命（用户可在控制中心手动创建）
+    echo "dde-pdf-printer: 创建打印机 $PRINTER 失败，请手动在控制中心创建" >&2
+fi
+
+exit 0

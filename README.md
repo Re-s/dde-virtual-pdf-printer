@@ -1,8 +1,8 @@
-# deepin-pdf-printer
+# dde-pdf-printer
 
 > deepin/UOS v25 的虚拟 PDF 打印机 —— 类似 Windows 的「Microsoft Print to PDF」。
 
-在任意应用的打印对话框中选择 **Deepin-PDF**，即可将文档输出为 PDF 文件保存到指定目录，并通过 **DDE 控制中心**插件进行管理。
+在任意应用的打印对话框中选择 **DDE-PDF**，即可将文档输出为 PDF 文件保存到指定目录，并通过 **DDE 控制中心**插件进行管理。
 
 > 🏆 deepin「10 亿 Token 奖池写插件」大赛参赛作品
 
@@ -42,17 +42,25 @@
 ```bash
 # 方式一：下载 Release deb（支持 amd64 / arm64 / loong64）
 # https://github.com/Re-s/dde-virtual-pdf-printer/releases 选择对应架构
-sudo dpkg -i deepin-pdf-printer_*.deb
+sudo dpkg -i dde-pdf-printer_*.deb
 
 # 方式二：从源码构建（见下方「构建」）
 ```
 
-安装后打开控制中心 → 「PDF 打印机」即可管理；任意应用打印对话框选择 **Deepin-PDF** 输出 PDF。
+> ⚠️ **从 v0.7.x 及更早升级**：包名已从 `deepin-pdf-printer` 改为 `dde-pdf-printer`（打印机
+> `Deepin-PDF` → `DDE-PDF`，backend `deepinpdf` → `ddepdf`）。升级需先卸载旧包再装新包，
+> 已生成的 PDF 文件不受影响：
+> ```bash
+> sudo dpkg -r deepin-pdf-printer   # 自动删除旧打印机 Deepin-PDF
+> sudo dpkg -i dde-pdf-printer_*.deb  # 自动创建新打印机 DDE-PDF
+> ```
+
+安装后打开控制中心 → 「PDF 打印机」即可管理；任意应用打印对话框选择 **DDE-PDF** 输出 PDF。
 
 ## 🚀 使用
 
 1. 打开任意文档（WPS、浏览器、LibreOffice 等）→ 打印（Ctrl+P）
-2. 打印机选择 **Deepin-PDF** → 打印
+2. 打印机选择 **DDE-PDF** → 打印
 3. PDF 保存到默认 `~/PDF/` 目录（可在控制中心设置页修改输出目录、**文件名模板**、是否**保留原文件后缀**）
 4. 控制中心「PDF 打印机 → PDF 文件」可查看、打开、删除
 
@@ -97,8 +105,8 @@ cmake --install build/integration --prefix /usr --strip 2>/dev/null || \
   (cd build/integration && make install DESTDIR=/tmp/inst)
 
 # 打包（ci/package-deb.sh 自动收集 backend/插件/翻译/图标/DEBIAN 脚本）
-SRC_DIR=$PWD INST_DIR=/tmp/inst bash ci/package-deb.sh amd64 0.7.2
-# 产物：deepin-pdf-printer_0.7.2_amd64.deb
+SRC_DIR=$PWD INST_DIR=/tmp/inst bash ci/package-deb.sh amd64 0.8.0
+# 产物：dde-pdf-printer_0.8.0_amd64.deb
 ```
 
 **依赖**：`cups`、`cups-filters`、`ghostscript`、`dde-control-center`、Qt6（Core/DBus）、DTK6
@@ -123,8 +131,8 @@ git tag -a v0.8.0 -m "..." && git push origin v0.8.0
 ## 📁 项目结构
 
 ```
-deepin-pdf-printer/
-├── backend/deepinpdf          # CUPS backend（Python，root 运行，写 PDF）
+dde-pdf-printer/
+├── backend/ddepdf          # CUPS backend（Python，root 运行，写 PDF）
 ├── src/
 │   ├── service/               # 服务层：PrinterManager / ConfigManager / OutputDirWatcher
 │   └── plugin/

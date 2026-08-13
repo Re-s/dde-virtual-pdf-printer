@@ -9,14 +9,14 @@
 
 DDE（deepin 桌面环境）的**虚拟 PDF 打印机**，类似 Windows「Microsoft Print to PDF」：
 
-- 任意应用的打印对话框 → 选择 **Deepin-PDF** 打印机 → 输出 PDF 到用户目录
+- 任意应用的打印对话框 → 选择 **DDE-PDF** 打印机 → 输出 PDF 到用户目录
 - 通过 **DDE 控制中心插件** 提供图形化管理（4 个页面）
 - 参赛作品（deepin 插件大赛），基于 deepin Skills 开发
 
 ## 2. 架构速览
 
 ```
-打印对话框 → CUPS → backend/deepinpdf (Python, root) → <输出目录>/*.pdf
+打印对话框 → CUPS → backend/ddepdf (Python, root) → <输出目录>/*.pdf
                                                         ↑ 读同一配置
 控制中心 → src/plugin/ (C++ PdfPrinterModule + QML 4页) → ConfigManager (QSettings)
               ↓
@@ -27,7 +27,7 @@ DDE（deepin 桌面环境）的**虚拟 PDF 打印机**，类似 Windows「Micro
 
 | 层 | 位置 | 职责 | 运行身份 |
 | --- | --- | --- | --- |
-| CUPS backend | `backend/deepinpdf` | 收打印数据 → 写 PDF 文件 | **root**（权限 700） |
+| CUPS backend | `backend/ddepdf` | 收打印数据 → 写 PDF 文件 | **root**（权限 700） |
 | 服务层 | `src/service/` | 打印机管理、配置、目录监听（纯 Qt 静态库） | 用户会话 |
 | 控制中心插件 | `src/plugin/` | DccObject + QML 页面，调用服务层 | 用户会话 |
 
@@ -65,9 +65,9 @@ cmake --build build/integration -j$(nproc)
 
 **安装后验证**：
 ```bash
-dpkg -i deepin-pdf-printer_*.deb     # 应输出「已创建打印机 Deepin-PDF」
-lpstat -p Deepin-PDF                 # 打印机存在
-lp -d Deepin-PDF somefile.txt        # 打印 → ~/PDF/ 或配置目录出现 .pdf
+dpkg -i dde-pdf-printer_*.deb     # 应输出「已创建打印机 DDE-PDF」
+lpstat -p DDE-PDF                 # 打印机存在
+lp -d DDE-PDF somefile.txt        # 打印 → ~/PDF/ 或配置目录出现 .pdf
 ```
 
 ## 5. 关键技术约束（踩坑总结，务必遵守）
@@ -149,7 +149,7 @@ lp -d Deepin-PDF somefile.txt        # 打印 → ~/PDF/ 或配置目录出现 .
 | 改文件列表展示 | `PdfprinterFilesPage.qml` + `pdfFileDetails`（`pdfprintermodule.cpp`） |
 | 新增页面 | 新建 `PdfprinterXxxPage.qml` → `PdfprinterMain.qml` 注册（weight 递增） |
 | 改打印机行为 | `src/service/printermanager.cpp`（QProcess 调 lpadmin/lpstat） |
-| 改输出文件名规则 | `backend/deepinpdf`（sanitize_filename + 命名模板） |
+| 改输出文件名规则 | `backend/ddepdf`（sanitize_filename + 命名模板） |
 
 **修改后必做**：
 1. `rm -rf build/integration && cmake ... && make`（QML 变更时必须）
@@ -161,7 +161,7 @@ lp -d Deepin-PDF somefile.txt        # 打印 → ~/PDF/ 或配置目录出现 .
 ```bash
 # 静态
 /usr/lib/qt6/bin/qmllint src/plugin/qml/*.qml     # QML 语法
-python3 -m py_compile backend/deepinpdf            # backend 语法
+python3 -m py_compile backend/ddepdf            # backend 语法
 
 # 运行时（控制中心 D-Bus）
 dbus-send --session --dest=org.deepin.dde.ControlCenter1 --type=method_call --print-reply \
@@ -170,7 +170,7 @@ dbus-send --session --dest=org.deepin.dde.ControlCenter1 --type=method_call --pr
   /org/deepin/dde/ControlCenter1 org.deepin.dde.ControlCenter1.ShowPage string:pdfprinter/<page>
 
 # 端到端
-lp -d Deepin-PDF /path/to/file && ls -t ~/PDF/ | head -1   # 打印 → PDF
+lp -d DDE-PDF /path/to/file && ls -t ~/PDF/ | head -1   # 打印 → PDF
 ```
 
 ## 8. 安全红线（评审/参赛要求）
@@ -188,7 +188,7 @@ lp -d Deepin-PDF /path/to/file && ls -t ~/PDF/ | head -1   # 打印 → PDF
 | 范围 | 要求 |
 | --- | --- |
 | 作品名 / 仓库名 | ✅ 用 DDE 生态表述（如「DDE 虚拟 PDF 打印机」/ `dde-virtual-pdf-printer`） |
-| deb 包名 / 可执行名 / 应用显示名 | ❌ 不得含 `deepin`（如 `deepin-pdf-printer`、`deepinpdf` 均违规） |
+| deb 包名 / 可执行名 / 应用显示名 | ❌ 不得含 `deepin`（如 `dde-pdf-printer`、`deepinpdf` 均违规） |
 | 帮助页版本号 / README 标题 | ❌ 不得含 `deepin`（版本展示如 `dde-pdf-printer vX.Y.Z`） |
 | 插件显示名 | ✅ 「PDF 打印机」（模块名 `pdfprinter` 无 deepin 字样） |
 

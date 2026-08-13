@@ -31,7 +31,7 @@
 namespace {
 
 // 插件版本（帮助页展示 + 日志记录，与 deb 包 Version 保持一致）
-const QString kPluginVersion = QStringLiteral("0.7.2");
+const QString kPluginVersion = QStringLiteral("0.8.0");
 
 // debug 模式日志：每个 Q_INVOKABLE 功能调用都会写入日志文件，方便排查"按钮点了没反应"。
 // 注意：控制中心进程 stdout/stderr 被 deepin 会话重定向到 /dev/null，且

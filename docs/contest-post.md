@@ -11,7 +11,7 @@
 
 在 deepin/UOS v25 上实现类似 Windows「Microsoft Print to PDF」的完整闭环：
 
-**任意应用 → 打印对话框 → 选择「Deepin-PDF」→ 输出 PDF 到指定目录**
+**任意应用 → 打印对话框 → 选择「DDE-PDF」→ 输出 PDF 到指定目录**
 
 并通过 DDE 控制中心插件提供图形化管理界面（打印机状态、PDF 文件管理、输出目录配置、使用帮助），安装即用。
 
@@ -54,11 +54,11 @@
 
 ```bash
 # 按你的系统架构选择（x86_64 用 amd64；飞腾/鲲鹏等 ARM 用 arm64；龙芯用 loong64）
-wget https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.7.2/deepin-pdf-printer_0.7.2_amd64.deb
-sudo dpkg -i deepin-pdf-printer_0.7.2_amd64.deb
+wget https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.7.2/dde-pdf-printer_0.7.2_amd64.deb
+sudo dpkg -i dde-pdf-printer_0.7.2_amd64.deb
 ```
 
-安装完成即自动创建「Deepin-PDF」打印机，打开任意应用打印对话框即可使用。
+安装完成即自动创建「DDE-PDF」打印机，打开任意应用打印对话框即可使用。
 
 ### 方式二：从源码构建
 
@@ -80,7 +80,7 @@ cmake --build build/integration -j$(nproc)
 ## 五、使用说明
 
 1. 打开任意文档（WPS、浏览器、LibreOffice 等）→ 打印（Ctrl+P）
-2. 打印机选择 **Deepin-PDF** → 打印
+2. 打印机选择 **DDE-PDF** → 打印
 3. PDF 保存到默认 `~/PDF/`（可在控制中心设置页修改输出目录、**文件名模板**、是否**保留原文件后缀**）
 4. 控制中心「PDF 打印机」→ 管理生成的 PDF 文件
 

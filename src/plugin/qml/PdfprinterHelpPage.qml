@@ -38,7 +38,7 @@ DccObject {
                 implicitHeight: 44
                 Text {
                     anchors.fill: parent
-                    text: qsTr("在任意应用中打开打印对话框（Ctrl+P），打印机选择 Deepin-PDF")
+                    text: qsTr("在任意应用中打开打印对话框（Ctrl+P），打印机选择 DDE-PDF")
                     wrapMode: Text.WordWrap
                     elide: Text.ElideRight
                     verticalAlignment: Text.AlignVCenter
@@ -115,7 +115,7 @@ DccObject {
                 implicitHeight: 44
                 Text {
                     anchors.fill: parent
-                    text: qsTr("请先在「打印机状态」页确认 Deepin-PDF 打印机已安装（显示「已安装」）")
+                    text: qsTr("请先在「打印机状态」页确认 DDE-PDF 打印机已安装（显示「已安装」）")
                     wrapMode: Text.WordWrap
                     elide: Text.ElideRight
                     verticalAlignment: Text.AlignVCenter
@@ -154,7 +154,7 @@ DccObject {
             weight: 30
             pageType: DccObject.Editor
             page: Text {
-                text: qsTr("deepin-pdf-printer v%1").arg(dccData.pluginVersion)
+                text: qsTr("dde-pdf-printer v%1").arg(dccData.pluginVersion)
                 verticalAlignment: Text.AlignVCenter
                 color: sysPal.windowText
             }

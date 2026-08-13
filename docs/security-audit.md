@@ -1,4 +1,4 @@
-# 安全审查报告 — deepin-pdf-printer
+# 安全审查报告 — dde-pdf-printer
 
 > 审查日期：2026-08-12 | 版本：v0.4.9 基线（v0.7.x 持续适用）
 > 审查范围：backend（root 运行 Python）+ C++ 服务层 + 控制中心插件（C++/QML）+ debian 打包

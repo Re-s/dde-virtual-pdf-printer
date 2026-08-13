@@ -1,4 +1,4 @@
-Package: deepin-pdf-printer
+Package: dde-pdf-printer
 Version: 0.5.4
 Section: utils
 Priority: optional

@@ -6,7 +6,7 @@
 
 ## 1. 项目目标
 
-在 deepin/UOS v25 上实现「任意应用 → 打印对话框 → 选 Deepin-PDF → 输出 PDF 到用户目录」的完整闭环，并通过 **DDE 控制中心插件** 提供图形化管理界面。
+在 deepin/UOS v25 上实现「任意应用 → 打印对话框 → 选 DDE-PDF → 输出 PDF 到用户目录」的完整闭环，并通过 **DDE 控制中心插件** 提供图形化管理界面。
 
 ## 1.5 需求调研（2026-08-12，论坛数据支撑）
 
@@ -67,7 +67,7 @@
 ┌──────────────────────────────────────────────────────────┐
 │                  DDE 控制中心 (dde-control-center)       │
 │  ┌────────────────────────────────────────────────────┐  │
-│  │  插件: deepin-pdf-printer (QML 页面 + C++ 逻辑)     │  │
+│  │  插件: dde-pdf-printer (QML 页面 + C++ 逻辑)     │  │
 │  │  ├─ 状态页: 打印机检测/创建/删除                     │  │
 │  │  ├─ 配置页: 输出目录、默认文件名、自动打开           │  │
 │  │  ├─ 列表页: 已生成 PDF 浏览/打开/删除               │  │
@@ -79,8 +79,8 @@
 ┌──────────────────▼───────────────────────────────────────┐
 │  CUPS 子系统                                            │
 │  ┌──────────────────────────────┐  ┌──────────────────┐  │
-│  │ 打印机 "Deepin-PDF"          │  │ 自定义 backend   │  │
-│  │ (Generic-PDF_Printer PPD)    │──│ deepinpdf        │  │
+│  │ 打印机 "DDE-PDF"          │  │ 自定义 backend   │  │
+│  │ (Generic-PDF_Printer PPD)    │──│ ddepdf        │  │
 │  │                              │  │ (Python, root)   │  │
 │  └──────────────────────────────┘  └────────┬─────────┘  │
 │                                             │ 写入        │
@@ -91,7 +91,7 @@
 
 ## 3. 模块划分
 
-### 3.1 backend（已 POC 验证）— `backend/deepinpdf`
+### 3.1 backend（已 POC 验证）— `backend/ddepdf`
 
 | 职责 | 实现 | 状态 |
 | --- | --- | --- |
@@ -160,9 +160,9 @@ src/plugin/
 ## 5. 目录结构（最终）
 
 ```
-deepin-pdf-printer/
+dde-pdf-printer/
 ├── backend/
-│   └── deepinpdf              # CUPS backend 脚本（Python）
+│   └── ddepdf              # CUPS backend 脚本（Python）
 ├── src/
 │   ├── service/               # 打印机管理服务（C++）
 │   └── plugin/                # 控制中心插件（C++ + QML）
@@ -206,12 +206,12 @@ deepin-pdf-printer/
 ## 8. 已验证的 POC 结果
 
 ```
-$ lp -d Deepin-PDF /tmp/test.txt
-请求 ID 为 Deepin-PDF-5
+$ lp -d DDE-PDF /tmp/test.txt
+请求 ID 为 DDE-PDF-5
 $ ls ~/PDF/
 test-print.txt-5-20260812-133027.pdf   ← PDF document, 1 page ✅
 ```
 
-- backend 以 700 root 权限安装于 `/usr/lib/cups/backend/deepinpdf`
-- 打印机 `Deepin-PDF` 使用系统 Generic-PDF_Printer PPD
+- backend 以 700 root 权限安装于 `/usr/lib/cups/backend/ddepdf`
+- 打印机 `DDE-PDF` 使用系统 Generic-PDF_Printer PPD
 - 中文内容、gs 渲染、文件属主均验证通过

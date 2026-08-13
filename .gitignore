@@ -20,3 +20,6 @@ debian/deepin-pdf-printer/
 .vscode/
 .idea/
 *.swp
+
+# deb 打包临时目录
+/debian/dde-pdf-printer/

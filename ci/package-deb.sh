@@ -6,13 +6,13 @@ set -e
 
 ARCH="${1:?usage: package-deb.sh <arch> [version]}"
 VER="${2:-0.7.2}"
-PKG="deepin-pdf-printer"
+PKG="dde-pdf-printer"
 SRC="${SRC_DIR:-/src}"
 INST="${INST_DIR:-/tmp/inst}"
 ROOT="$SRC/debian/$PKG"
 MULTIARCH=$(gcc -print-multiarch 2>/dev/null || dpkg-architecture -qDEB_HOST_MULTIARCH 2>/dev/null || echo "$ARCH")
 
-echo "=== 打包 deepin-pdf-printer ${VER} (${ARCH}, multiarch=$MULTIARCH) ==="
+echo "=== 打包 dde-pdf-printer ${VER} (${ARCH}, multiarch=$MULTIARCH) ==="
 rm -rf "$ROOT"
 mkdir -p "$ROOT/DEBIAN"
 
@@ -26,7 +26,7 @@ fi
 
 # 2. CUPS backend（Python，架构无关，root:root 700）
 mkdir -p "$ROOT/usr/lib/cups/backend"
-install -m 700 "$SRC/backend/deepinpdf" "$ROOT/usr/lib/cups/backend/deepinpdf"
+install -m 700 "$SRC/backend/ddepdf" "$ROOT/usr/lib/cups/backend/ddepdf"
 
 # 3. 控制中心图标（DCI，make install 未覆盖则手动放）
 if ! find "$ROOT/usr" -name 'dcc_pdfprinter.dci' 2>/dev/null | grep -q .; then
@@ -35,14 +35,14 @@ if ! find "$ROOT/usr" -name 'dcc_pdfprinter.dci' 2>/dev/null | grep -q .; then
 fi
 
 # 4. DEBIAN 脚本
-cp "$SRC"/debian/deepin-pdf-printer.postinst "$ROOT/DEBIAN/postinst"
-cp "$SRC"/debian/deepin-pdf-printer.prerm "$ROOT/DEBIAN/prerm"
-cp "$SRC"/debian/deepin-pdf-printer.postrm "$ROOT/DEBIAN/postrm"
+cp "$SRC"/debian/dde-pdf-printer.postinst "$ROOT/DEBIAN/postinst"
+cp "$SRC"/debian/dde-pdf-printer.prerm "$ROOT/DEBIAN/prerm"
+cp "$SRC"/debian/dde-pdf-printer.postrm "$ROOT/DEBIAN/postrm"
 chmod 755 "$ROOT/DEBIAN/postinst" "$ROOT/DEBIAN/prerm" "$ROOT/DEBIAN/postrm"
 
 # 5. control
 cat > "$ROOT/DEBIAN/control" <<EOF
-Package: deepin-pdf-printer
+Package: dde-pdf-printer
 Version: $VER
 Section: utils
 Priority: optional
@@ -54,6 +54,6 @@ Description: Deepin virtual PDF printer (CUPS backend + control center plugin)
  "Microsoft Print to PDF" on Windows.
 EOF
 
-dpkg-deb --root-owner-group --build "$ROOT" "$SRC/deepin-pdf-printer_${VER}_${ARCH}.deb"
-echo "=== 产物: $SRC/deepin-pdf-printer_${VER}_${ARCH}.deb ==="
-ls -la "$SRC/deepin-pdf-printer_${VER}_${ARCH}.deb"
+dpkg-deb --root-owner-group --build "$ROOT" "$SRC/dde-pdf-printer_${VER}_${ARCH}.deb"
+echo "=== 产物: $SRC/dde-pdf-printer_${VER}_${ARCH}.deb ==="
+ls -la "$SRC/dde-pdf-printer_${VER}_${ARCH}.deb"

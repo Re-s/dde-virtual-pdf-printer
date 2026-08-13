@@ -82,7 +82,7 @@ jobs:
           VER="${GITHUB_REF_NAME#v}"
           case "$VER" in
             0.*|1.*|2.*) ;;  # 形如 0.7.2 的 tag
-            *) VER="0.7.2" ;;
+            *) VER="0.8.0" ;;
           esac
           set -x
           sudo chroot /tmp/rootfs bash -x -c "cd /src && bash ci/package-deb.sh ${{ matrix.arch }} $VER" \
@@ -91,7 +91,7 @@ jobs:
           tail -40 /tmp/pkg.log
           # 无论成败都把日志拷进 artifact 路径（失败也上传供分析）
           sudo cp /tmp/pkg.log /tmp/rootfs/src/ci-pkg.log || true
-          ls -la /tmp/rootfs/src/deepin-pdf-printer_*.deb 2>/dev/null || exit 1
+          ls -la /tmp/rootfs/src/dde-pdf-printer_*.deb 2>/dev/null || exit 1
 
       - name: Upload artifacts (always)
         if: always()
@@ -99,12 +99,12 @@ jobs:
         with:
           name: pkg-output-${{ matrix.arch }}
           path: |
-            /tmp/rootfs/src/deepin-pdf-printer_*.deb
+            /tmp/rootfs/src/dde-pdf-printer_*.deb
             /tmp/rootfs/src/ci-pkg.log
 
       - name: Sanity check deb contents
         run: |
-          DEB=$(ls /tmp/rootfs/src/deepin-pdf-printer_*_${{ matrix.arch }}.deb | head -1)
+          DEB=$(ls /tmp/rootfs/src/dde-pdf-printer_*_${{ matrix.arch }}.deb | head -1)
           echo "=== $DEB ==="
           dpkg-deb --info "$DEB" | grep -E 'Package|Version|Architecture'
           dpkg-deb --contents "$DEB" | grep -E '\.so|backend|\.dci' | head -6
@@ -112,8 +112,8 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: deepin-pdf-printer-${{ matrix.arch }}
-          path: /tmp/rootfs/src/deepin-pdf-printer_*_${{ matrix.arch }}.deb
+          name: dde-pdf-printer-${{ matrix.arch }}
+          path: /tmp/rootfs/src/dde-pdf-printer_*_${{ matrix.arch }}.deb
 
   # ============ tag 触发：构建成功后自动发布 Release ============
   release:
@@ -141,14 +141,14 @@ jobs:
         run: |
           TAG="${{ github.ref_name }}"
           REPO="${{ github.repository }}"
-          DEBS=$(find dist -name 'deepin-pdf-printer_*.deb' | sort)
+          DEBS=$(find dist -name 'dde-pdf-printer_*.deb' | sort)
           echo "发布 $TAG 资产："
           echo "$DEBS"
           NOTES="多架构安装包（GitHub Actions 自动构建）
 
           * amd64 / arm64 / loong64 三个 .deb
           * 构建方式：debootstrap deepin beige rootfs + chroot（loong64 经 QEMU 用户态模拟）
-          * 安装：sudo apt install ./deepin-pdf-printer_<版本>_<架构>.deb"
+          * 安装：sudo apt install ./dde-pdf-printer_<版本>_<架构>.deb"
           # 确保 release 存在（已存在则复用）
           if ! gh release view "$TAG" >/dev/null 2>&1; then
             echo "创建 Release $TAG"

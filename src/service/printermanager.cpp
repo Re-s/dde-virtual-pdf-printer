@@ -34,11 +34,11 @@ void pmWriteLog(const QString &msg)
 
 namespace {
 
-const QString kPrinterName = QStringLiteral("Deepin-PDF");
+const QString kPrinterName = QStringLiteral("DDE-PDF");
 
 // Successful `lpstat -p <name>` (LC_ALL=C) prints a line starting with
 // "printer <name> ...". A *missing* printer prints an error on stderr such as
-//   lpstat: Invalid destination name in list "Deepin-PDF".
+//   lpstat: Invalid destination name in list "DDE-PDF".
 // which also contains the printer name, so a naive contains() match would
 // keep reporting a removed printer as existing. Anchor the match to the
 // "printer <name>" prefix instead.
@@ -46,7 +46,7 @@ const QRegularExpression kPrinterLine(QStringLiteral("^printer %1\\b")
         .arg(QRegularExpression::escape(kPrinterName)));
 
 // Run lpstat with LC_ALL=C so the output is stable English text, e.g.
-// "printer Deepin-PDF is idle. enabled since ..." (localized output would
+// "printer DDE-PDF is idle. enabled since ..." (localized output would
 // otherwise break keyword matching). Returns combined stdout+stderr.
 QString runLpstat(const QStringList &args)
 {
@@ -99,7 +99,7 @@ bool PrinterManager::createPrinter()
     const bool ok = runCommand(QStringLiteral("lpadmin"), {
         QStringLiteral("-p"), kPrinterName,
         QStringLiteral("-E"),
-        QStringLiteral("-v"), QStringLiteral("deepinpdf:/"),
+        QStringLiteral("-v"), QStringLiteral("ddepdf:/"),
         QStringLiteral("-P"), QStringLiteral("/usr/share/ppd/cupsfilters/Generic-PDF_Printer-PDF.ppd"),
     });
     if (ok) {

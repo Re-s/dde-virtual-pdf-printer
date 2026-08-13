@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""deepin-pdf — CUPS 虚拟 PDF 打印机 backend（POC 版）
+"""dde-pdf — CUPS 虚拟 PDF 打印机 backend（POC 版）
 
 CUPS backend 调用约定:
     backend job user title num-copies options [filename]
@@ -10,7 +10,7 @@ CUPS backend 调用约定:
     - 文件名: <title>-<jobid>-<时间戳>.pdf
     - 兼容 CUPS 的 discover 模式（无参数时输出设备信息）
 
-部署位置: /usr/lib/cups/backend/deepinpdf
+部署位置: /usr/lib/cups/backend/ddepdf
 """
 import os
 import sys
@@ -22,8 +22,8 @@ import configparser
 
 def discover():
     """CUPS 设备发现模式：无参数调用时打印支持的设备。"""
-    print('direct deepinpdf "Unknown" "Deepin PDF Virtual Printer"')
-    print('network deepinpdf "Unknown" "Deepin PDF Virtual Printer"')
+    print('direct ddepdf "Unknown" "DDE PDF Virtual Printer"')
+    print('network ddepdf "Unknown" "DDE PDF Virtual Printer"')
 
 
 def sanitize_filename(name: str, max_len: int = 60) -> str:

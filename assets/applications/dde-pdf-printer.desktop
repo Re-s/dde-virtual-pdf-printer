@@ -6,7 +6,7 @@ GenericName=Virtual PDF Printer
 GenericName[zh_CN]=虚拟 PDF 打印机
 Comment=Print documents to PDF files (DDE Control Center plugin)
 Comment[zh_CN]=将文档打印为 PDF 文件（DDE 控制中心插件）
-Exec=sh -c "for i in 1 2 3 4 5 6 7 8; do dbus-send --session --dest=org.deepin.dde.ControlCenter1 --type=method_call /org/deepin/dde/ControlCenter1 org.deepin.dde.ControlCenter1.Show 2>/dev/null && break; sleep 0.5; done; dbus-send --session --dest=org.deepin.dde.ControlCenter1 --type=method_call /org/deepin/dde/ControlCenter1 org.deepin.dde.ControlCenter1.ShowModule string:pdfprinter"
+Exec=sh -c "dde-control-center --show & for i in 1 2 3 4 5 6 7 8; do dbus-send --session --dest=org.deepin.dde.ControlCenter1 --type=method_call /org/deepin/dde/ControlCenter1 org.deepin.dde.ControlCenter1.ShowModule string:pdfprinter 2>/dev/null && exit 0; sleep 0.5; done"
 Icon=dcc_pdfprinter
 Terminal=false
 Categories=Utility;

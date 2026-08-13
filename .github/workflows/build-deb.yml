@@ -78,8 +78,14 @@ jobs:
 
       - name: Package deb
         run: |
+          # 版本号：tag 触发用 tag 名（去 v 前缀），分支触发用默认 0.7.2
+          VER="${GITHUB_REF_NAME#v}"
+          case "$VER" in
+            0.*|1.*|2.*) ;;  # 形如 0.7.2 的 tag
+            *) VER="0.7.2" ;;
+          esac
           set -x
-          sudo chroot /tmp/rootfs bash -x -c 'cd /src && bash ci/package-deb.sh ${{ matrix.arch }}' \
+          sudo chroot /tmp/rootfs bash -x -c "cd /src && bash ci/package-deb.sh ${{ matrix.arch }} $VER" \
             2>&1 | tee /tmp/pkg.log || true
           echo "=== pkg.log tail ==="
           tail -40 /tmp/pkg.log
@@ -108,3 +114,46 @@ jobs:
         with:
           name: deepin-pdf-printer-${{ matrix.arch }}
           path: /tmp/rootfs/src/deepin-pdf-printer_*_${{ matrix.arch }}.deb
+
+  # ============ tag 触发：构建成功后自动发布 Release ============
+  release:
+    name: Publish Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all arch debs
+        uses: actions/download-artifact@v4
+        with:
+          path: dist/
+
+      - name: List collected debs
+        run: |
+          find dist -name '*.deb' | sort
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ github.ref_name }}"
+          DEBS=$(find dist -name 'deepin-pdf-printer_*.deb' | sort)
+          echo "发布 $TAG 资产："
+          echo "$DEBS"
+          NOTES="多架构安装包（GitHub Actions 自动构建）
+
+          * amd64 / arm64 / loong64 三个 .deb
+          * 构建方式：debootstrap deepin beige rootfs + chroot（loong64 经 QEMU 用户态模拟）
+          * 安装：sudo apt install ./deepin-pdf-printer_<版本>_<架构>.deb"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG 已存在，更新资产"
+            gh release upload "$TAG" $DEBS --clobber
+          else
+            echo "创建 Release $TAG"
+            gh release create "$TAG" $DEBS --title "$TAG" --notes "$NOTES"
+          fi
+          gh release view "$TAG" --json tagName,assets \
+            --jq '.tagName + " | assets: " + ([.assets[].name] | join(", "))'

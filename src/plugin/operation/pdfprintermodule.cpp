@@ -72,6 +72,8 @@ public:
                 q, &PdfPrinterModule::autoOpenChanged);
         connect(configManager, &ConfigManager::filenameTemplateChanged,
                 q, &PdfPrinterModule::filenameTemplateChanged);
+        connect(configManager, &ConfigManager::keepTitleExtensionChanged,
+                q, &PdfPrinterModule::keepTitleExtensionChanged);
         // Directory content changed (new PDF printed, file removed, ...).
         connect(watcher, &OutputDirWatcher::filesChanged,
                 q, &PdfPrinterModule::refreshPdfList);
@@ -138,6 +140,16 @@ QString PdfPrinterModule::filenameTemplate() const
 void PdfPrinterModule::setFilenameTemplate(const QString &tpl)
 {
     d->configManager->setFilenameTemplate(tpl);
+}
+
+bool PdfPrinterModule::keepTitleExtension() const
+{
+    return d->configManager->keepTitleExtension();
+}
+
+void PdfPrinterModule::setKeepTitleExtension(bool keep)
+{
+    d->configManager->setKeepTitleExtension(keep);
 }
 
 void PdfPrinterModule::setAutoOpen(bool open)

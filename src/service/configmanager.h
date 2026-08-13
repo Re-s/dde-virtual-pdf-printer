@@ -14,11 +14,14 @@ public:
     void setAutoOpen(bool open);
     QString filenameTemplate() const;  // 输出文件名模板（默认 {title}-{jobid}-{date}-{time}）
     void setFilenameTemplate(const QString &tpl);
+    bool keepTitleExtension() const;   // 是否保留原文档后缀（默认 false）
+    void setKeepTitleExtension(bool keep);
 
 Q_SIGNALS:
     void outputDirChanged();
     void autoOpenChanged();
     void filenameTemplateChanged();
+    void keepTitleExtensionChanged();
 
 private:
     void syncConfig();                 // 写回配置存储

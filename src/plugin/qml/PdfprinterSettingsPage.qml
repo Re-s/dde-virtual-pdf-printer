@@ -99,5 +99,18 @@ DccObject {
                 }
             }
         }
+
+        DccObject {
+            name: "keepTitleExtension"
+            parentName: root.name + "/settingsGroup"
+            displayName: qsTr("保留原文件后缀")
+            description: qsTr("开启后文件名保留原始文档后缀（如 采购单.txt），默认不保留（如 采购单）")
+            weight: 40
+            pageType: DccObject.Editor
+            page: Switch {
+                checked: dccData.keepTitleExtension
+                onToggled: dccData.keepTitleExtension = checked
+            }
+        }
     }
 }

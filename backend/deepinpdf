@@ -113,15 +113,42 @@ def get_filename_template(username: str) -> str:
     return '{title}-{jobid}-{date}-{time}'
 
 
-def render_filename(tpl: str, title: str, job_id: str, now: float) -> str:
+def get_keep_extension(username: str) -> bool:
+    """是否保留原文档后缀（控制中心设置页可配置，默认不保留）。
+
+    读取与输出目录同一配置文件（~/.config/org.deepin.dde.pdfprinter/pdfprinter.conf）。
+    """
+    try:
+        home = pwd.getpwnam(username).pw_dir
+    except KeyError:
+        home = os.path.expanduser('~')
+    conf_path = os.path.join(home, '.config', 'org.deepin.dde.pdfprinter', 'pdfprinter.conf')
+    try:
+        parser = configparser.ConfigParser()
+        with open(conf_path, encoding='utf-8') as f:
+            parser.read_file(f)
+        raw = parser.get('General', 'keepTitleExtension', fallback='').strip().lower()
+        if raw in ('true', '1', 'yes'):
+            return True
+    except (OSError, configparser.Error):
+        pass
+    return False
+
+
+def render_filename(tpl: str, title: str, job_id: str, now: float, keep_ext: bool = False) -> str:
     """按模板渲染输出文件名（不含扩展名），并做最终安全清洗。
 
-    - {title} → sanitize_filename(title)（防穿越/注入）
+    - {title} → sanitize_filename(title)（防穿越/注入）；keep_ext=False 时去掉原后缀
     - {jobid} → 仅数字
     - {date} / {time} → 本地时间
     - 未知占位符原样保留；结果再整体 sanitize 一次（防模板注入路径字符）
     """
     safe_title = sanitize_filename(title)
+    if not keep_ext:
+        # 去掉最后一个点号后缀（如 采购单.txt → 采购单）；无后缀则原样
+        dot = safe_title.rfind('.')
+        if dot > 0:
+            safe_title = safe_title[:dot]
     safe_job = ''.join(c for c in job_id if c.isdigit()) or '0'
     date_s = time.strftime('%Y%m%d', time.localtime(now))
     time_s = time.strftime('%H%M%S', time.localtime(now))
@@ -174,8 +201,9 @@ def main():
     outdir = get_output_dir(username)
     # 文件名模板（控制中心设置页可自定义；默认 {title}-{jobid}-{date}-{time}）
     tpl = get_filename_template(username)
+    keep_ext = get_keep_extension(username)
     now = time.time()
-    base = render_filename(tpl, title, job_id, now)
+    base = render_filename(tpl, title, job_id, now, keep_ext)
     # 保留毫秒防同秒同名覆盖（strftime %f 在 Linux 不支持微秒，手动取）
     ts_ms = int((now - int(now)) * 1000)
     outpath = os.path.join(outdir, f'{base}{ts_ms:03d}.pdf')

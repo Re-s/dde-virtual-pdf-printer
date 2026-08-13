@@ -9,6 +9,7 @@ const QString kAppName = QStringLiteral("pdfprinter");
 const QString kKeyOutputDir = QStringLiteral("outputDir");
 const QString kKeyAutoOpen = QStringLiteral("autoOpen");
 const QString kKeyFilenameTemplate = QStringLiteral("filenameTemplate");
+const QString kKeyKeepTitleExtension = QStringLiteral("keepTitleExtension");
 const QString kDefaultTemplate = QStringLiteral("{title}-{jobid}-{date}-{time}");
 
 QSettings openSettings()
@@ -80,6 +81,23 @@ void ConfigManager::setFilenameTemplate(const QString &tpl)
     settings.setValue(kKeyFilenameTemplate, clean);
     syncConfig();
     emit filenameTemplateChanged();
+}
+
+bool ConfigManager::keepTitleExtension() const
+{
+    const QSettings settings = openSettings();
+    return settings.value(kKeyKeepTitleExtension, false).toBool();
+}
+
+void ConfigManager::setKeepTitleExtension(bool keep)
+{
+    if (keep == keepTitleExtension()) {
+        return;
+    }
+    QSettings settings = openSettings();
+    settings.setValue(kKeyKeepTitleExtension, keep);
+    syncConfig();
+    emit keepTitleExtensionChanged();
 }
 
 void ConfigManager::syncConfig()

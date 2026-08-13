@@ -22,10 +22,13 @@
 - ✅ **任意应用打印为 PDF**：WPS / 浏览器 / LibreOffice 打印对话框直接可选
 - ✅ **控制中心管理模块**「PDF 打印机」4 个页面：
   - 📊 打印机状态：一键安装 / 移除打印机
-  - 📄 PDF 文件列表：浏览（名称/大小/时间）、打开、删除（带确认）、打开目录
-  - ⚙️ 设置：自定义输出目录（deepin 原生目录选择器）、打印后自动打开 PDF
-  - ❓ 帮助：三步使用引导 + 常见问题
+  - 📄 PDF 文件列表：浏览（名称/大小/时间）、打开、删除、打开目录
+  - ⚙️ 设置：自定义输出目录（deepin 原生目录选择器）、**自定义文件名模板**、**保留原文件后缀开关**、打印后自动打开 PDF
+  - ❓ 帮助：三步使用引导 + 常见问题 + **版本号显示**
+- ✅ **自定义 PDF 文件名**：支持 `{title}` / `{jobid}` / `{date}` / `{time}` 占位符模板，默认 `{title}-{jobid}-{date}-{time}`（如 `采购单-42-20260813-103947.pdf`），并可选保留原文档后缀
 - ✅ **输出目录可自定义**：插件与 backend 统一读配置，修改后全局生效
+- ✅ **多架构支持**：GitHub Actions 自动构建 **amd64 / arm64 / loong64** 三架构 deb 并发布 Release
+- ✅ **功能调用日志**：每次操作记录到 `~/.cache/deepin/dde-control-center/pdfprinter.log`（含版本号），便于问题排查
 - ✅ **安装即用**：deb 包 postinst 自动创建打印机
 - ✅ **中文界面** + DCI 图标，深度融入 DDE 设计语言
 
@@ -33,19 +36,22 @@
 
 | 打印机状态 | PDF 文件列表 |
 | --- | --- |
-| ![状态](https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.5.4/01-status.png) | ![文件列表](https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.5.4/02-files.png) |
+| ![状态](https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.7.2/01-status.png) | ![文件列表](https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.7.2/02-files.png) |
 
 | 设置 | 帮助 |
 | --- | --- |
-| ![设置](https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.5.4/03-settings.png) | ![帮助](https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.5.4/04-help.png) |
+| ![设置](https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.7.2/03-settings.png) | ![帮助](https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.7.2/04-help.png) |
 
 ## 四、安装方式
 
 ### 方式一：安装 Release deb 包（推荐）
 
+支持 **amd64 / arm64 / loong64** 三种架构（GitHub Actions 自动构建）：
+
 ```bash
-wget https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.5.4/deepin-pdf-printer_0.5.4_amd64.deb
-sudo dpkg -i deepin-pdf-printer_0.5.4_amd64.deb
+# 按你的系统架构选择（x86_64 用 amd64；飞腾/鲲鹏等 ARM 用 arm64；龙芯用 loong64）
+wget https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.7.2/deepin-pdf-printer_0.7.2_amd64.deb
+sudo dpkg -i deepin-pdf-printer_0.7.2_amd64.deb
 ```
 
 安装完成即自动创建「Deepin-PDF」打印机，打开任意应用打印对话框即可使用。
@@ -71,7 +77,7 @@ cmake --build build/integration -j$(nproc)
 
 1. 打开任意文档（WPS、浏览器、LibreOffice 等）→ 打印（Ctrl+P）
 2. 打印机选择 **Deepin-PDF** → 打印
-3. PDF 保存到默认 `~/PDF/`（可在控制中心设置页修改输出目录）
+3. PDF 保存到默认 `~/PDF/`（可在控制中心设置页修改输出目录、**文件名模板**、是否**保留原文件后缀**）
 4. 控制中心「PDF 打印机」→ 管理生成的 PDF 文件
 
 ## 六、开发过程说明（deepin Skills 使用）
@@ -92,6 +98,8 @@ cmake --build build/integration -j$(nproc)
 3. **纯 QML 应用的目录选择**：控制中心是 QGuiApplication，`QFileDialog`（Widgets）直接崩溃、QML `FolderDialog` 被 dde-file-dialog 接管行为不可控 → **D-Bus 异步调用 `com.deepin.filemanager.filedialog`**（createDialog → setFileMode(Directory) → accepted 信号 → selectedUrls）
 4. **QML 编译缓存陷阱**：QML 被编译进 `lib<name>_qml.so`，改 QML 必须完整重建，否则旧代码生效（增量 make 不感知）
 5. **Q_PROPERTY WRITE 陷阱**：`setOutputDir` 是属性 WRITE 方法，QML 中不能当函数调（TypeError）→ 用属性赋值 `dccData.outputDir = dir`
+6. **多架构（arm64/loong64）CI 构建**：GitHub Actions + **debootstrap deepin beige rootfs** 隔离构建（loong64 无原生 runner，用 **qemu-user-static 用户态模拟**）；发现 arm64 静态库链 .so 必须 `-fPIC`（AArch64 严格要求，x86_64 侥幸通过）→ 全局 `CMAKE_POSITION_INDEPENDENT_CODE ON`；打包改用 `make install DESTDIR` 产物（插件路径由 CMake 决定，兼容 DCC API v1.0/v1.1）
+7. **自动化发布**：tag 触发 → 三架构构建 → artifact 汇总 → `gh api` 手动上传 Release（`gh --clobber` 有 404 bug，改用「先删同名资产再 POST uploads」）
 
 ### 开发模式
 
@@ -99,7 +107,7 @@ cmake --build build/integration -j$(nproc)
 
 ### AI 工具调用 deepin Skills 对话记录截图
 
-![AI 对话记录](https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.5.4/05-ai-dialogue.png)
+![AI 对话记录](https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.7.2/05-ai-dialogue.png)
 
 > 上图展示 AI 编程工具调用 deepin Skills（dde-control-center-development / dtk-development / deepin-25-platform）辅助开发的关键过程：POC 验证 → 契约化并行开发 → 目录选择闪退修复（D-Bus 方案）→ 回写修复（WRITE 属性/QML 缓存）→ P0 增强与发布。
 
@@ -120,4 +128,4 @@ cmake --build build/integration -j$(nproc)
 | 需求调研（2000 帖分析） | https://github.com/Re-s/dde-virtual-pdf-printer/blob/master/docs/forum-print-survey.md |
 | 安全审查报告 | https://github.com/Re-s/dde-virtual-pdf-printer/blob/master/docs/security-audit.md |
 
-**Release**：https://github.com/Re-s/dde-virtual-pdf-printer/releases/tag/v0.5.4 （deb 包 + 截图）
+**Release**：https://github.com/Re-s/dde-virtual-pdf-printer/releases/tag/v0.7.2 （三架构 deb 包 + 截图，GitHub Actions 自动构建发布）

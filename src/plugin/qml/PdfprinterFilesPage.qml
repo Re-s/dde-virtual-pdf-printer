@@ -219,10 +219,8 @@ DccObject {
                         }
                     }
 
-                    // 悬停显示完整路径
-                    ToolTip.visible: hoverArea.hovered
-                    ToolTip.text: modelData.path
-                    ToolTip.delay: 600
+                    // 注：ToolTip 附加属性在普通 Item 根上无效（Unable to assign [undefined] to bool），
+                    // 会导致 delegate 求值中断、按钮交互失效——已移除
                 }
 
                 // 点击整行打开文件

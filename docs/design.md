@@ -100,9 +100,9 @@
 | 写入用户目录 | root 创建 + chown 给用户 | ✅ |
 | 设备发现 | discover() 输出 | ✅ |
 
-**后续增强**：
-- 输出目录可配置（通过 DConfig 或 backend 选项 `-o output-dir=...`）
-- 文件名规则可配置（保留原文件名 / 追加时间戳）
+**已实现的增强（2026-08）**：
+- ✅ 输出目录可配置（控制中心设置页 → 原生目录选择器，QSettings 存储）
+- ✅ 文件名模板可配置（`{title}`/`{jobid}`/`{date}`/`{time}` 占位符 + 保留原后缀开关）
 - 多用户并发安全（已有 jobid 区分）
 
 ### 3.2 打印机管理服务 — `src/service/`（C++ / QProcess）
@@ -153,7 +153,7 @@ src/plugin/
 | 输出目录 | `~/PDF`（默认）+ DConfig 可改 | 与 cups-pdf 习惯一致 |
 | 打印机创建时机 | 安装时 postinst + 插件内按钮 | 双保险 |
 | PPD | 系统自带 Generic-PDF_Printer-PDF.ppd | 无需自带 PPD，减少维护 |
-| 文件命名 | `<原文件名>-<jobid>-<时间戳>.pdf` | 避免重名覆盖 |
+| 文件命名 | 模板 `{title}-{jobid}-{date}-{time}.pdf`（可配置，支持保留原后缀） | 避免重名覆盖 + 用户可定制 |
 | 权限模型 | lpadmin 用户级（lp 组）+ polkit 兜底 | 普通用户加入 lp 组后即可，无需 root |
 | 插件语言 | C++ (DccObject) + QML | 控制中心 v25 标准架构 |
 

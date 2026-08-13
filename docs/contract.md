@@ -13,7 +13,12 @@
 
 ## 项目根目录
 
-`~/Projects/deepin-pdf-printer/`
+`<仓库根目录>/`（clone 后即为源码根）
+
+> 📌 本契约记录 v0.4.x 并行开发时的接口快照。后续已扩展：
+> `filenameTemplate`（文件名模板）/ `keepTitleExtension`（保留原后缀）/
+> `pluginVersion`（版本号）/ `openOutputDirPicker()`（异步目录选择），
+> 以及 PdfPrinterModule 对应 Q_PROPERTY/Q_INVOKABLE——以实际源码为准。
 
 ## 接口契约（钉死，不得修改签名）
 
@@ -167,10 +172,10 @@ private:
 1. **cmake 用 `/usr/local/bin/cmake`**（wrapper，自动处理 LD_LIBRARY_PATH 污染）
 2. **DTK/Qt 版本**：控制中心插件用 Qt6 + Dtk6（`find_package(Dtk6Widget)`，target `Dtk6::Widget`）；本机有 libdtk6*-dev 6.7.47
 3. **编译命令**：`cd <build> && /usr/local/bin/cmake .. && make -j$(nproc)`
-4. 参考官方示例：`~/Projects/refs/dde-control-center/examples/plugin-example/`
+4. 参考官方示例：`dde-control-center` 源码 `examples/plugin-example/` 目录
 5. 插件命名：PLUGIN_NAME = `pdfprinter`；根 QML name = `pdfprinter`；QML 文件首字母大写
 6. DCC 插件 CMake 依赖：`find_package(DdeControlCenter REQUIRED)`（已装 dde-control-center-dev 6.1.101）
-7. 网络请求用 `python3 ~/.local/bin/netfetch.py fetch <url>`（自动直连/代理）
+7. 网络请求用 `netfetch.py`（见 socks-proxy-fallback 技能，自动直连/代理）
 
 ## 验证要求
 

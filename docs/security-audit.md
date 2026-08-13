@@ -1,6 +1,6 @@
 # 安全审查报告 — deepin-pdf-printer
 
-> 审查日期：2026-08-12 | 版本：v0.4.9 基线（后续版本持续适用）
+> 审查日期：2026-08-12 | 版本：v0.4.9 基线（v0.7.x 持续适用）
 > 审查范围：backend（root 运行 Python）+ C++ 服务层 + 控制中心插件（C++/QML）+ debian 打包
 > 审查重点：文件系统非法访问 / 异常外连 / 敏感数据采集
 
@@ -18,7 +18,7 @@
 
 | 访问点 | 对象 | 越权？ |
 | --- | --- | --- |
-| backend 写 outpath | `<输出目录>/<清洗文件名>-<jobid>-<毫秒时间戳>.pdf` | 否，仅用户配置目录 |
+| backend 写 outpath | `<输出目录>/<按模板渲染的文件名>.pdf`（模板支持 `{title}`/`{jobid}`/`{date}`/`{time}`，渲染后统一清洗防穿越/注入） | 否，仅用户配置目录 |
 | backend 读 conf_path | `~/.config/org.deepin.dde.pdfprinter/pdfprinter.conf` | 否，仅自己的配置 |
 | backend 读 filename | CUPS 传入的作业临时文件 | 否 |
 | C++ QFile::remove | outputDir() 内的 PDF | 否 |

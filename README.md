@@ -14,25 +14,34 @@
 - **控制中心管理模块**「PDF 打印机」：
   - 📊 **状态页**：查看打印机状态，一键安装 / 移除打印机
   - 📄 **PDF 文件列表**：浏览输出目录的 PDF（名称 / 大小 / 时间），打开、删除、打开目录
-  - ⚙️ **设置页**：自定义输出目录（原生目录选择器）、打印后自动打开 PDF
+  - ⚙️ **设置页**：自定义输出目录（原生目录选择器）、**自定义文件名模板**、**保留原文件后缀开关**、打印后自动打开 PDF
+  - ❓ **帮助页**：三步使用引导 + 常见问题 + 版本号
+- **自定义 PDF 文件名**：支持 `{title}` / `{jobid}` / `{date}` / `{time}` 占位符模板（默认 `{title}-{jobid}-{date}-{time}`），可选保留原文档后缀
 - **输出目录可自定义**：backend 与插件统一读取配置，修改后全局生效
+- **多架构支持**：GitHub Actions 自动构建 **amd64 / arm64 / loong64** 三架构 deb 并发布 Release
+- **功能调用日志**：每次操作记录到 `~/.cache/deepin/dde-control-center/pdfprinter.log`（含版本号）
 - **中文界面** + DCI 图标，融入 deepin 设计语言
 - **安装即用**：deb 包 postinst 自动创建打印机
 
 ## 🖼️ 截图
 
-| 打印机状态 | PDF 文件列表 |
+| 控制中心入口 | 打印机状态 |
 | --- | --- |
-| ![状态](docs/screenshots/01-status.png) | ![文件列表](docs/screenshots/02-files.png) |
+| ![入口](docs/screenshots/00-home.png) | ![状态](docs/screenshots/01-status.png) |
 
-| 设置 | 帮助 |
+| PDF 文件列表 | 设置 |
 | --- | --- |
-| ![设置](docs/screenshots/03-settings.png) | ![帮助](docs/screenshots/04-help.png) |
+| ![文件列表](docs/screenshots/02-files.png) | ![设置](docs/screenshots/03-settings.png) |
+
+| 帮助 | 输出目录（生成的 PDF） |
+| --- | --- |
+| ![帮助](docs/screenshots/04-help.png) | ![输出目录](docs/screenshots/11-output-dir.png) |
 
 ## 📦 安装
 
 ```bash
-# 方式一：安装预构建 deb（amd64）
+# 方式一：下载 Release deb（支持 amd64 / arm64 / loong64）
+# https://github.com/Re-s/dde-virtual-pdf-printer/releases 选择对应架构
 sudo dpkg -i deepin-pdf-printer_*.deb
 
 # 方式二：从源码构建（见下方「构建」）
@@ -44,7 +53,7 @@ sudo dpkg -i deepin-pdf-printer_*.deb
 
 1. 打开任意文档（WPS、浏览器、LibreOffice 等）→ 打印（Ctrl+P）
 2. 打印机选择 **Deepin-PDF** → 打印
-3. PDF 保存到默认 `~/PDF/` 目录（可在控制中心设置页修改）
+3. PDF 保存到默认 `~/PDF/` 目录（可在控制中心设置页修改输出目录、**文件名模板**、是否**保留原文件后缀**）
 4. 控制中心「PDF 打印机 → PDF 文件」可查看、打开、删除
 
 ## 🔧 构建
@@ -83,38 +92,29 @@ cmake --build build/integration -j$(nproc)
 ### 3. 打包 deb（backend + 插件 + 翻译 + 图标 + postinst）
 
 ```bash
-# 组装安装目录
-sudo rm -rf debian/deepin-pdf-printer
-mkdir -p debian/deepin-pdf-printer/usr/lib/cups/backend \
-         debian/deepin-pdf-printer/usr/lib/x86_64-linux-gnu/dde-control-center/plugins_v1.1/pdfprinter \
-         debian/deepin-pdf-printer/usr/share/dde-control-center/translations/v1.1 \
-         debian/deepin-pdf-printer/usr/share/dsg/icons \
-         debian/deepin-pdf-printer/DEBIAN
+# 组装安装目录（make install 到临时目录，插件路径由 CMake 决定）
+cmake --install build/integration --prefix /usr --strip 2>/dev/null || \
+  (cd build/integration && make install DESTDIR=/tmp/inst)
 
-# backend（必须 700 root:root，CUPS 才以 root 运行）
-install -m 700 backend/deepinpdf debian/deepin-pdf-printer/usr/lib/cups/backend/deepinpdf
-
-# 插件（.so + QML + qmldir）
-cp build/integration/lib/plugins_v1.1/pdfprinter/*.so \
-   build/integration/lib/plugins_v1.1/pdfprinter/*.qml \
-   build/integration/lib/plugins_v1.1/pdfprinter/qmldir \
-   debian/deepin-pdf-printer/usr/lib/x86_64-linux-gnu/dde-control-center/plugins_v1.1/pdfprinter/
-
-# 翻译 + 图标
-cp src/plugin/translations/*.qm debian/deepin-pdf-printer/usr/share/dde-control-center/translations/v1.1/
-cp assets/icons/*.dci debian/deepin-pdf-printer/usr/share/dsg/icons/
-
-# 安装脚本（postinst 自动建打印机）
-cp debian/deepin-pdf-printer.postinst debian/deepin-pdf-printer/DEBIAN/postinst
-cp debian/deepin-pdf-printer.prerm    debian/deepin-pdf-printer/DEBIAN/prerm
-cp debian/deepin-pdf-printer.postrm   debian/deepin-pdf-printer/DEBIAN/postrm
-chmod 755 debian/deepin-pdf-printer/DEBIAN/post*
-
-# 打包（--root-owner-group 保证 ostree 只读系统可安装）
-dpkg-deb --root-owner-group --build debian/deepin-pdf-printer deepin-pdf-printer_0.5.4_amd64.deb
+# 打包（ci/package-deb.sh 自动收集 backend/插件/翻译/图标/DEBIAN 脚本）
+SRC_DIR=$PWD INST_DIR=/tmp/inst bash ci/package-deb.sh amd64 0.7.2
+# 产物：deepin-pdf-printer_0.7.2_amd64.deb
 ```
 
 **依赖**：`cups`、`cups-filters`、`ghostscript`、`dde-control-center`、Qt6（Core/DBus）、DTK6
+
+### 4. 多架构自动构建（GitHub Actions）
+
+仓库已配置 `.github/workflows/build-deb.yml`，**打 tag 自动构建三架构并发布 Release**：
+
+```bash
+git tag -a v0.8.0 -m "..." && git push origin v0.8.0
+```
+
+- `amd64`（原生 runner）/ `arm64`（原生 arm runner）/ `loong64`（QEMU 用户态模拟）
+- 构建方式：debootstrap deepin beige rootfs 隔离构建（不污染 runner）
+- 构建成功自动创建/更新 Release 并上传三个架构 deb
+- 只推代码不想构建：commit message 加 `[skip ci]`
 
 > 🤖 **AI 二次开发**：clone 仓库后，AI 编程助手（Cursor / Claude Code / Codex 等）会自动加载
 > [`AGENTS.md`](AGENTS.md) —— 内含架构速览、构建铁律、全部踩坑经验与验证清单，

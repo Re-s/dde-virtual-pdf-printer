@@ -42,13 +42,9 @@
 | --- | --- |
 | ![文件列表](https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.7.2/02-files.png) | ![设置](https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.7.2/03-settings.png) |
 
-| 帮助 | 系统打印机列表 |
+| 帮助 | 输出目录（生成的 PDF） |
 | --- | --- |
-| ![帮助](https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.7.2/04-help.png) | ![打印机列表](https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.7.2/10-printer-list.png) |
-
-| 输出目录（生成的 PDF） |
-| --- |
-| ![输出目录](https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.7.2/11-output-dir.png) |
+| ![帮助](https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.7.2/04-help.png) | ![输出目录](https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.7.2/11-output-dir.png) |
 
 ## 四、安装方式
 

@@ -30,6 +30,9 @@
 
 namespace {
 
+// 插件版本（帮助页展示 + 日志记录，与 deb 包 Version 保持一致）
+const QString kPluginVersion = QStringLiteral("0.6.9");
+
 // debug 模式日志：每个 Q_INVOKABLE 功能调用都会写入日志文件，方便排查"按钮点了没反应"。
 // 注意：控制中心进程 stdout/stderr 被 deepin 会话重定向到 /dev/null，且
 // QT_LOGGING_RULES 屏蔽 qDebug/qInfo——必须直接写文件才能看到。
@@ -92,6 +95,8 @@ public:
         , printerManager(new PrinterManager(configManager, this))
         , watcher(new OutputDirWatcher(this))
     {
+        // 插件加载即记录版本（排查问题时先确认版本）
+        writeLog(QStringLiteral("[pdfprinter] VERSION %1 (plugin loaded)").arg(kPluginVersion));
         // Relay printer state changes to the module.
         connect(printerManager, &PrinterManager::printerStateChanged,
                 q, &PdfPrinterModule::printerStateChanged);
@@ -141,6 +146,11 @@ PdfPrinterModule::PdfPrinterModule(QObject *parent)
     : QObject(parent)
     , d(new Impl(this))
 {
+}
+
+QString PdfPrinterModule::pluginVersion() const
+{
+    return kPluginVersion;
 }
 
 bool PdfPrinterModule::printerExists() const

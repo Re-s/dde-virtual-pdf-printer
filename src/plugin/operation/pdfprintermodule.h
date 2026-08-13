@@ -8,6 +8,7 @@ class PdfPrinterModule : public QObject
     Q_OBJECT
     // QML 可读属性
     Q_PROPERTY(bool printerExists READ printerExists NOTIFY printerStateChanged FINAL)
+    Q_PROPERTY(QString pluginVersion READ pluginVersion CONSTANT FINAL)
     Q_PROPERTY(QString printerName READ printerName CONSTANT FINAL)
     Q_PROPERTY(QString outputDir READ outputDir WRITE setOutputDir NOTIFY outputDirChanged FINAL)
     Q_PROPERTY(bool autoOpen READ autoOpen WRITE setAutoOpen NOTIFY autoOpenChanged FINAL)
@@ -22,6 +23,7 @@ public:
 
     bool printerExists() const;
     QString printerName() const;
+    QString pluginVersion() const;   // 插件版本（帮助页展示）
     QString outputDir() const;
     void setOutputDir(const QString &dir);
     QString filenameTemplate() const;

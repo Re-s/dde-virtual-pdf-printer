@@ -145,5 +145,19 @@ DccObject {
                 }
             }
         }
+
+        // 版本信息（方便反馈问题时确认版本）
+        DccObject {
+            name: "version"
+            parentName: root.name + "/faqGroup"
+            displayName: qsTr("版本")
+            weight: 30
+            pageType: DccObject.Editor
+            page: Text {
+                text: qsTr("deepin-pdf-printer v%1").arg(dccData.pluginVersion)
+                verticalAlignment: Text.AlignVCenter
+                color: sysPal.windowText
+            }
+        }
     }
 }

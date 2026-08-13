@@ -9,66 +9,6 @@ import org.deepin.dcc 1.0
 DccObject {
     id: root
 
-    // 待删除的文件索引（点击删除按钮时暂存，确认后执行）
-    property int pendingDeleteIndex: -1
-
-    // 删除确认弹窗（纯 QML Popup 实现，Controls 2.0 均有，不依赖 Widgets）
-    Popup {
-        id: deleteDialog
-        modal: true
-        focus: true
-        anchors.centerIn: parent
-        width: 360
-        padding: 20
-
-        ColumnLayout {
-            width: parent.width
-            spacing: 16
-
-            Text {
-                Layout.fillWidth: true
-                text: qsTr("确认删除")
-                font.pixelSize: 16
-                font.bold: true
-                color: sysPal.windowText
-            }
-
-            Text {
-                Layout.fillWidth: true
-                text: qsTr("确定要删除这个 PDF 文件吗？此操作不可撤销。")
-                wrapMode: Text.WordWrap
-                color: sysPal.windowText
-                opacity: 0.8
-            }
-
-            RowLayout {
-                Layout.alignment: Qt.AlignRight
-                spacing: 8
-
-                Button {
-                    text: qsTr("取消")
-                    implicitWidth: 80
-                    onClicked: {
-                        root.pendingDeleteIndex = -1;
-                        deleteDialog.close();
-                    }
-                }
-                Button {
-                    text: qsTr("删除")
-                    implicitWidth: 80
-                    highlighted: true
-                    onClicked: {
-                        if (root.pendingDeleteIndex >= 0) {
-                            dccData.deletePdfFile(root.pendingDeleteIndex);
-                        }
-                        root.pendingDeleteIndex = -1;
-                        deleteDialog.close();
-                    }
-                }
-            }
-        }
-    }
-
     // 系统主题色（跟随亮/暗色，兼容 Qt5/Qt6 的纯 QtQuick 取色方式）
     SystemPalette {
         id: sysPal
@@ -212,10 +152,10 @@ DccObject {
                             implicitWidth: 64
                             implicitHeight: 32
                             text: qsTr("删除")
-                            onClicked: {
-                                root.pendingDeleteIndex = index;
-                                deleteDialog.open();
-                            }
+                            // 直接删除（v0.6.x 曾用 Popup 确认，但 Popup 声明在 DccObject
+                            // 根上 parent 不可见，弹窗不显示导致按钮"失效"——恢复直接删除，
+                            // 删除后列表自动刷新）
+                            onClicked: dccData.deletePdfFile(index)
                         }
                     }
 

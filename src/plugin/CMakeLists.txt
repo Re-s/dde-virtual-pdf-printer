@@ -3,6 +3,9 @@ project(pdfprinter-plugin LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
+# 静态库（service）需 PIC 才能链进插件 .so：AArch64 严格要求 -fPIC（x86_64 侥幸通过，
+# arm64 链接报 dangerous relocation）
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 set(PLUGIN_NAME "pdfprinter")
 

@@ -56,7 +56,7 @@ jobs:
           EOF
           sudo chroot /tmp/rootfs apt-get update
           sudo chroot /tmp/rootfs env DEBIAN_FRONTEND=noninteractive apt-get install -y \
-            build-essential cmake git python3 \
+            build-essential dpkg-dev cmake git python3 \
             qt6-base-dev qt6-declarative-dev qt6-tools-dev linguist-qt6 \
             libdtk6core-dev libdtk6gui-dev dde-control-center-dev
 
@@ -64,10 +64,14 @@ jobs:
         run: |
           sudo mkdir -p /tmp/rootfs/src
           sudo cp -a . /tmp/rootfs/src/
+          # 排除本机 build 残留（避免污染 chroot 构建）
+          sudo rm -rf /tmp/rootfs/src/build
           sudo chroot /tmp/rootfs bash -c \
             'cd /src && mkdir -p build && cd build && \
-             cmake ../src/plugin -DCMAKE_INSTALL_PREFIX=/usr && \
-             make -j$(nproc)'
+             cmake ../src/plugin -DCMAKE_INSTALL_PREFIX=/usr 2>&1 | tee /tmp/cmake.log && \
+             make -j$(nproc) 2>&1 | tee /tmp/make.log'
+          # 失败时输出关键日志（GitHub 日志页可见）
+          sudo bash -c 'test -f /tmp/rootfs/tmp/make.log && grep -iE "error|fatal" /tmp/rootfs/tmp/make.log | tail -20 || true'
 
       - name: Package deb
         run: |

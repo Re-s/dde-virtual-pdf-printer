@@ -8,7 +8,9 @@ VER="${2:-0.7.2}"
 PKG="deepin-pdf-printer"
 SRC="${SRC_DIR:-/src}"
 ROOT="$SRC/debian/$PKG"
-MULTIARCH=$(dpkg-architecture -qDEB_HOST_MULTIARCH)
+# multiarch 三元组：gcc -print-multiarch 最可靠（build-essential 必带）；
+# dpkg-architecture 属 dpkg-dev，minbase rootfs 可能没有
+MULTIARCH=$(gcc -print-multiarch 2>/dev/null || dpkg-architecture -qDEB_HOST_MULTIARCH 2>/dev/null || echo "$ARCH")
 
 echo "=== 打包 deepin-pdf-printer ${VER} (${ARCH}) ==="
 rm -rf "$ROOT"

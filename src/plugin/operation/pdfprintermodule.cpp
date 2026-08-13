@@ -70,6 +70,8 @@ public:
         });
         connect(configManager, &ConfigManager::autoOpenChanged,
                 q, &PdfPrinterModule::autoOpenChanged);
+        connect(configManager, &ConfigManager::filenameTemplateChanged,
+                q, &PdfPrinterModule::filenameTemplateChanged);
         // Directory content changed (new PDF printed, file removed, ...).
         connect(watcher, &OutputDirWatcher::filesChanged,
                 q, &PdfPrinterModule::refreshPdfList);
@@ -126,6 +128,16 @@ void PdfPrinterModule::setOutputDir(const QString &dir)
 bool PdfPrinterModule::autoOpen() const
 {
     return d->configManager->autoOpen();
+}
+
+QString PdfPrinterModule::filenameTemplate() const
+{
+    return d->configManager->filenameTemplate();
+}
+
+void PdfPrinterModule::setFilenameTemplate(const QString &tpl)
+{
+    d->configManager->setFilenameTemplate(tpl);
 }
 
 void PdfPrinterModule::setAutoOpen(bool open)

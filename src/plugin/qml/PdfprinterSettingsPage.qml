@@ -70,5 +70,34 @@ DccObject {
                 onToggled: dccData.autoOpen = checked
             }
         }
+
+        DccObject {
+            name: "filenameTemplate"
+            parentName: root.name + "/settingsGroup"
+            displayName: qsTr("默认文件名")
+            description: qsTr("PDF 文件名模板，支持占位符：{title} 原文档名 / {jobid} 作业号 / {date} 日期 / {time} 时间")
+            weight: 30
+            pageType: DccObject.Editor
+            page: RowLayout {
+                spacing: 10
+                TextField {
+                    id: tplField
+                    Layout.fillWidth: true
+                    implicitWidth: 200
+                    placeholderText: "{title}-{jobid}-{date}-{time}"
+                    text: dccData.filenameTemplate
+                    // 编辑完成（回车/失焦）时保存；属性赋值而非 set 方法（WRITE 属性）
+                    onEditingFinished: {
+                        if (text !== dccData.filenameTemplate) {
+                            dccData.filenameTemplate = text;
+                        }
+                    }
+                }
+                Button {
+                    text: qsTr("恢复默认")
+                    onClicked: dccData.filenameTemplate = "{title}-{jobid}-{date}-{time}"
+                }
+            }
+        }
     }
 }

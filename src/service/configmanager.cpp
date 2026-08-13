@@ -8,6 +8,8 @@ const QString kOrgName = QStringLiteral("org.deepin.dde.pdfprinter");
 const QString kAppName = QStringLiteral("pdfprinter");
 const QString kKeyOutputDir = QStringLiteral("outputDir");
 const QString kKeyAutoOpen = QStringLiteral("autoOpen");
+const QString kKeyFilenameTemplate = QStringLiteral("filenameTemplate");
+const QString kDefaultTemplate = QStringLiteral("{title}-{jobid}-{date}-{time}");
 
 QSettings openSettings()
 {
@@ -56,6 +58,28 @@ void ConfigManager::setAutoOpen(bool open)
     settings.setValue(kKeyAutoOpen, open);
     syncConfig();
     emit autoOpenChanged();
+}
+
+QString ConfigManager::filenameTemplate() const
+{
+    const QSettings settings = openSettings();
+    const QString tpl = settings.value(kKeyFilenameTemplate).toString().trimmed();
+    if (tpl.isEmpty()) {
+        return kDefaultTemplate;
+    }
+    return tpl;
+}
+
+void ConfigManager::setFilenameTemplate(const QString &tpl)
+{
+    const QString clean = tpl.trimmed();
+    if (clean == filenameTemplate()) {
+        return;
+    }
+    QSettings settings = openSettings();
+    settings.setValue(kKeyFilenameTemplate, clean);
+    syncConfig();
+    emit filenameTemplateChanged();
 }
 
 void ConfigManager::syncConfig()

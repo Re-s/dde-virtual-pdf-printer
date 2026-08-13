@@ -11,6 +11,7 @@ class PdfPrinterModule : public QObject
     Q_PROPERTY(QString printerName READ printerName CONSTANT FINAL)
     Q_PROPERTY(QString outputDir READ outputDir WRITE setOutputDir NOTIFY outputDirChanged FINAL)
     Q_PROPERTY(bool autoOpen READ autoOpen WRITE setAutoOpen NOTIFY autoOpenChanged FINAL)
+    Q_PROPERTY(QString filenameTemplate READ filenameTemplate WRITE setFilenameTemplate NOTIFY filenameTemplateChanged FINAL)
     Q_PROPERTY(QStringList pdfFiles READ pdfFiles NOTIFY pdfFilesChanged FINAL)
     Q_PROPERTY(QVariantList pdfFileDetails READ pdfFileDetails NOTIFY pdfFilesChanged FINAL)
     Q_PROPERTY(bool busy READ busy NOTIFY busyChanged FINAL)
@@ -22,6 +23,8 @@ public:
     QString printerName() const;
     QString outputDir() const;
     void setOutputDir(const QString &dir);
+    QString filenameTemplate() const;
+    void setFilenameTemplate(const QString &tpl);
     bool autoOpen() const;
     void setAutoOpen(bool open);
     QStringList pdfFiles() const;
@@ -43,6 +46,7 @@ Q_SIGNALS:
     void printerStateChanged();
     void outputDirChanged();
     void autoOpenChanged();
+    void filenameTemplateChanged();
     void pdfFilesChanged();
     void busyChanged();
     void lastErrorChanged();

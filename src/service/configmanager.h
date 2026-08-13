@@ -12,10 +12,13 @@ public:
     void setOutputDir(const QString &dir);
     bool autoOpen() const;             // 打印后自动打开 PDF
     void setAutoOpen(bool open);
+    QString filenameTemplate() const;  // 输出文件名模板（默认 {title}-{jobid}-{date}-{time}）
+    void setFilenameTemplate(const QString &tpl);
 
 Q_SIGNALS:
     void outputDirChanged();
     void autoOpenChanged();
+    void filenameTemplateChanged();
 
 private:
     void syncConfig();                 // 写回配置存储

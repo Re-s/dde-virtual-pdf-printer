@@ -88,6 +88,54 @@ def get_output_dir(username: str) -> str:
     return outdir
 
 
+def get_filename_template(username: str) -> str:
+    """获取用户配置的输出文件名模板（控制中心设置页可自定义）。
+
+    默认 '{title}-{jobid}-{date}-{time}'（保持历史行为：标题-作业ID-时间戳）。
+    支持占位符：{title} 原文档名（清洗后） / {jobid} CUPS 作业ID /
+               {date} YYYYMMDD / {time} HHMMSS
+    读取与输出目录同一配置文件（~/.config/org.deepin.dde.pdfprinter/pdfprinter.conf）。
+    """
+    try:
+        home = pwd.getpwnam(username).pw_dir
+    except KeyError:
+        home = os.path.expanduser('~')
+    conf_path = os.path.join(home, '.config', 'org.deepin.dde.pdfprinter', 'pdfprinter.conf')
+    try:
+        parser = configparser.ConfigParser()
+        with open(conf_path, encoding='utf-8') as f:
+            parser.read_file(f)
+        tpl = parser.get('General', 'filenameTemplate', fallback='').strip()
+        if tpl:
+            return tpl
+    except (OSError, configparser.Error):
+        pass
+    return '{title}-{jobid}-{date}-{time}'
+
+
+def render_filename(tpl: str, title: str, job_id: str, now: float) -> str:
+    """按模板渲染输出文件名（不含扩展名），并做最终安全清洗。
+
+    - {title} → sanitize_filename(title)（防穿越/注入）
+    - {jobid} → 仅数字
+    - {date} / {time} → 本地时间
+    - 未知占位符原样保留；结果再整体 sanitize 一次（防模板注入路径字符）
+    """
+    safe_title = sanitize_filename(title)
+    safe_job = ''.join(c for c in job_id if c.isdigit()) or '0'
+    date_s = time.strftime('%Y%m%d', time.localtime(now))
+    time_s = time.strftime('%H%M%S', time.localtime(now))
+    rendered = tpl.replace('{title}', safe_title) \
+                .replace('{jobid}', safe_job) \
+                .replace('{date}', date_s) \
+                .replace('{time}', time_s)
+    # 防模板含路径/分隔符注入
+    rendered = sanitize_filename(rendered)
+    if not rendered:
+        rendered = 'print'
+    return rendered
+
+
 def main():
     # CUPS 传递的参数（argv[0] 是设备 URI）
     if len(sys.argv) < 2 or sys.argv[1] == '--help' or sys.argv[1] == '-h':
@@ -124,13 +172,13 @@ def main():
         data = data[pdf_start:]
 
     outdir = get_output_dir(username)
-    base = sanitize_filename(title)
-    # 毫秒级时间戳 + job_id 防同秒同名覆盖（strftime %f 在 Linux 不支持微秒，
-    # 用 time.time() 手动取毫秒）
+    # 文件名模板（控制中心设置页可自定义；默认 {title}-{jobid}-{date}-{time}）
+    tpl = get_filename_template(username)
     now = time.time()
-    ts_sec = time.strftime('%Y%m%d-%H%M%S', time.localtime(now))
+    base = render_filename(tpl, title, job_id, now)
+    # 保留毫秒防同秒同名覆盖（strftime %f 在 Linux 不支持微秒，手动取）
     ts_ms = int((now - int(now)) * 1000)
-    outpath = os.path.join(outdir, f'{base}-{job_id}-{ts_sec}{ts_ms:03d}.pdf')
+    outpath = os.path.join(outdir, f'{base}{ts_ms:03d}.pdf')
 
     try:
         with open(outpath, 'wb') as f:

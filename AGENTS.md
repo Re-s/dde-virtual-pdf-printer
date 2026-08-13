@@ -210,11 +210,11 @@ grep -rniE 'deepin-(pdf|printer)|deepinpdf' debian/ src/ README.md AGENTS.md doc
 - 文档：`docs/design.md`（架构）、`docs/security-audit.md`（安全审查）、`docs/forum-print-survey.md`（需求调研）
 
 ### 5.8 .desktop 唤起控制中心（2026-08 实测）
-- **`dde-control-center --show` 是官方唤起参数，一行搞定**：未运行 → 启动并显示窗口；
-  已运行+隐藏 → 唤回窗口（单实例自动处理）。
+- **`dde-control-center --show` 是官方唤起参数**：未运行 → 启动并显示窗口；已运行+隐藏 → 唤回
+  （单实例自动处理）。命令行不带参数启动只注册 D-Bus 服务不显示窗口（「有时候唤不起来」根因）。
+- **显示 + 导航插件页**（.desktop Exec 推荐，until 等待服务就绪）：
   ```ini
-  Exec=dde-control-center --show
+  Exec=sh -c "dde-control-center --show & until dbus-send --session --dest=org.deepin.dde.ControlCenter1 --type=method_call /org/deepin/dde/ControlCenter1 org.deepin.dde.ControlCenter1.ShowModule string:pdfprinter 2>/dev/null; do sleep 0.5; done"
   ```
-- 命令行不带参数启动只注册 D-Bus 服务不显示窗口（表现为「有时候唤不起来」）。
-- 若需直达插件页（可选）：`--show` 启动后 `dbus-send ... ShowModule string:pdfprinter`。
+- 实测三场景全过（未运行启动+显示 / 隐藏唤回 / 显示幂等），截图确认 ShowModule 导航到插件页。
 

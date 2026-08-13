@@ -155,16 +155,18 @@ jobs:
             gh release create "$TAG" --title "$TAG" --notes "$NOTES"
           fi
           # 上传 deb（先删同名旧资产，再 POST uploads——gh --clobber 有 404 bug，手动实现）
+          REL_ID=$(gh api "repos/$REPO/releases/tags/$TAG" --jq '.id')
+          UPURL=$(gh api "repos/$REPO/releases/tags/$TAG" --jq '.upload_url' | sed 's/{?name,label}//')
+          echo "release id=$REL_ID"
           for deb in $DEBS; do
             NAME=$(basename "$deb")
-            # 1. 删除同名旧资产
-            gh api "repos/$REPO/releases/tags/$TAG/assets" --paginate \
+            # 1. 删除同名旧资产（GET releases/{id}/assets → DELETE assets/{id}）
+            gh api "repos/$REPO/releases/$REL_ID/assets" --paginate \
               --jq '.[] | select(.name == "'"$NAME"'") | .id' 2>/dev/null | while read -r AID; do
               echo "删除旧资产 $NAME (id=$AID)"
               gh api -X DELETE "repos/$REPO/releases/assets/$AID" >/dev/null 2>&1 || true
             done
-            # 2. 上传（手动解析 upload_url，避免 gh 内部 bug）
-            UPURL=$(gh api "repos/$REPO/releases/tags/$TAG" --jq '.upload_url' | sed 's/{?name,label}//')
+            # 2. 上传
             echo "上传 $NAME"
             gh api -X POST "$UPURL?name=$NAME" -H "Content-Type: application/vnd.debian.binary-package" \
               --input "$deb" >/dev/null || { echo "FAIL 上传 $NAME"; exit 1; }

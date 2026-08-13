@@ -9,7 +9,6 @@
 #include <QDBusInterface>
 #include <QDBusObjectPath>
 #include <QDBusReply>
-#include <QDesktopServices>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -285,12 +284,12 @@ void PdfPrinterModule::refreshPdfList()
     }
 
     // Auto-open only genuinely new files when the feature is enabled.
+    // 统一走 PrinterManager::openPdfFile（官方 dde-open，绕 portal 失效问题）
     if (d->configManager->autoOpen() && !newFiles.isEmpty()) {
         const QDir dir(d->configManager->outputDir());
         for (const QString &file : newFiles) {
-            const QString filePath = dir.filePath(file);
-            if (QDesktopServices::openUrl(QUrl::fromLocalFile(filePath))) {
-                Q_EMIT pdfAutoOpened(filePath);
+            if (d->printerManager->openPdfFile(file)) {
+                Q_EMIT pdfAutoOpened(dir.filePath(file));
             }
         }
     }

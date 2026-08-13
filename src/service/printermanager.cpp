@@ -2,7 +2,6 @@
 #include "configmanager.h"
 
 #include <QDebug>
-#include <QDesktopServices>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -148,8 +147,10 @@ QStringList PrinterManager::listPdfFiles() const
 bool PrinterManager::openPdfFile(const QString &fileName) const
 {
     const QString path = QDir(outputDir()).filePath(fileName);
-    // 同 openOutputDir：绕开 Qt6 portal 路径，直接 xdg-open（终端实测可靠）
-    const bool ok = QProcess::startDetached(QStringLiteral("xdg-open"), { path });
+    // 用官方 dde-open（实测可靠，绕 xdg-desktop-portal 失效问题）：
+    // xdg-open/QDesktopServices 在 deepin 走 portal，portal 后端失效时
+    // 返回成功但不开窗口；dde-open 是 deepin 官方文件打开命令。
+    const bool ok = QProcess::startDetached(QStringLiteral("dde-open"), { path });
     pmWriteLog(QStringLiteral("[pdfprinter] RESULT PrinterManager::openPdfFile file=%1 -> %2")
                    .arg(path, ok ? QStringLiteral("OK") : QStringLiteral("FAIL")));
     return ok;

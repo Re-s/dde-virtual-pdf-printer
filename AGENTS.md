@@ -127,10 +127,10 @@ lp -d DDE-PDF somefile.txt        # 打印 → ~/PDF/ 或配置目录出现 .pdf
   不要手动 cp（upperdir 与 overlay 语义不同，会制造 bind mount 类残留）。
 
 ### 5.7 打开文件/目录与 CI 发布（2026-08 实测）
-- **QDesktopServices::openUrl 在 deepin 上走 xdg-desktop-portal，portal 失效时返回 true 但不开窗口**
-  （`gio open` 同样失败）；`xdg-open` 在控制中心进程环境也一样。**绕过方案**：
-  打开目录用 `QProcess::startDetached("dde-file-manager", {dir})`；打开文件需系统装好
-  PDF 查看器（如 deepin-reader），否则默认应用指向空 → 无窗口但返回 OK。
+- **打开 PDF/文件用官方 `dde-open`**：xdg-desktop-portal 后端失效时 `QDesktopServices::openUrl`/
+  `xdg-open`/`gio open` 都返回 true 但不开窗口；`dde-open`（/usr/bin/dde-open，实测可靠）绕过。
+  打开目录用 `QProcess::startDetached("dde-file-manager", {dir})`（portal 同样失效）。
+  注意：打开文件需系统装好 PDF 查看器（deepin-reader），否则默认应用指向空 → 无窗口但返回 OK。
 - **arm64 链接必须 -fPIC**：静态库链进插件 .so 时，AArch64 报 `dangerous relocation`、
   x86_64 侥幸通过——`src/plugin/CMakeLists.txt` 已全局 `set(CMAKE_POSITION_INDEPENDENT_CODE ON)`。
 - **多架构 CI**：`.github/workflows/build-deb.yml` 用 debootstrap deepin beige rootfs 隔离构建

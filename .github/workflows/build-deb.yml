@@ -78,11 +78,20 @@ jobs:
           set -x
           sudo chroot /tmp/rootfs bash -x -c 'cd /src && bash ci/package-deb.sh ${{ matrix.arch }}' \
             2>&1 | tee /tmp/pkg.log || true
-          # 失败时输出完整尾部（GitHub 日志页可见）
           echo "=== pkg.log tail ==="
           tail -40 /tmp/pkg.log
-          # 检查产物是否存在（决定步骤成败）
+          # 无论成败都把日志拷进 artifact 路径（失败也上传供分析）
+          sudo cp /tmp/pkg.log /tmp/rootfs/src/ci-pkg.log || true
           ls -la /tmp/rootfs/src/deepin-pdf-printer_*.deb 2>/dev/null || exit 1
+
+      - name: Upload artifacts (always)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pkg-output-${{ matrix.arch }}
+          path: |
+            /tmp/rootfs/src/deepin-pdf-printer_*.deb
+            /tmp/rootfs/src/ci-pkg.log
 
       - name: Sanity check deb contents
         run: |

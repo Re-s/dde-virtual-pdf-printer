@@ -31,38 +31,32 @@ DccObject {
             name: "outputDir"
             parentName: root.name + "/settingsGroup"
             displayName: qsTr("输出目录")
-            description: qsTr("生成的 PDF 文件保存位置，默认 ~/PDF，可自定义任意文件夹")
+            description: qsTr("生成的 PDF 文件保存位置，默认 ~/PDF，可自定义")
             weight: 10
             pageType: DccObject.Editor
-            page: Item {
-                // 固定右侧组件区宽度，给左侧说明文字留空间（防窄窗口遮挡）
-                Layout.fillWidth: false
-                Layout.preferredWidth: 340
-                Layout.maximumWidth: 340
-                implicitWidth: 340
-                implicitHeight: 36
-                RowLayout {
-                    anchors.fill: parent
-                    spacing: 8
-                    TextField {
-                        id: dirField
-                        Layout.fillWidth: true
-                        implicitWidth: 180
-                        readOnly: true
-                        text: dccData.outputDir
+            page: RowLayout {
+                spacing: 8
+                // 路径框尽量占满（完整显示路径），按钮紧凑
+                TextField {
+                    id: dirField
+                    Layout.fillWidth: true
+                    implicitWidth: 320
+                    readOnly: true
+                    text: dccData.outputDir
+                }
+                Button {
+                    text: qsTr("选择目录…")
+                    implicitWidth: 84
+                    onClicked: {
+                        // C++ 侧通过 D-Bus 异步弹出 deepin 原生目录选择对话框，
+                        // 结果经 onOutputDirPicked 信号回写（不阻塞主线程）
+                        dccData.openOutputDirPicker();
                     }
-                    Button {
-                        text: qsTr("选择目录…")
-                        onClicked: {
-                            // C++ 侧通过 D-Bus 异步弹出 deepin 原生目录选择对话框，
-                            // 结果经 onOutputDirPicked 信号回写（不阻塞主线程）
-                            dccData.openOutputDirPicker();
-                        }
-                    }
-                    Button {
-                        text: qsTr("恢复默认")
-                        onClicked: dccData.outputDir = dccData.defaultOutputDir()
-                    }
+                }
+                Button {
+                    text: qsTr("恢复默认")
+                    implicitWidth: 74
+                    onClicked: dccData.outputDir = dccData.defaultOutputDir()
                 }
             }
         }
@@ -87,33 +81,25 @@ DccObject {
             description: qsTr("PDF 文件名模板，支持占位符：{title} 原文档名 / {jobid} 作业号 / {date} 日期 / {time} 时间")
             weight: 30
             pageType: DccObject.Editor
-            page: Item {
-                // 固定右侧组件区宽度，给左侧说明文字留空间（防窄窗口遮挡）
-                Layout.fillWidth: false
-                Layout.preferredWidth: 300
-                Layout.maximumWidth: 300
-                implicitWidth: 300
-                implicitHeight: 36
-                RowLayout {
-                    anchors.fill: parent
-                    spacing: 8
-                    TextField {
-                        id: tplField
-                        Layout.fillWidth: true
-                        implicitWidth: 200
-                        placeholderText: "{title}-{jobid}-{date}-{time}"
-                        text: dccData.filenameTemplate
-                        // 编辑完成（回车/失焦）时保存；属性赋值而非 set 方法（WRITE 属性）
-                        onEditingFinished: {
-                            if (text !== dccData.filenameTemplate) {
-                                dccData.filenameTemplate = text;
-                            }
+            page: RowLayout {
+                spacing: 8
+                TextField {
+                    id: tplField
+                    Layout.fillWidth: true
+                    implicitWidth: 300
+                    placeholderText: "{title}-{jobid}-{date}-{time}"
+                    text: dccData.filenameTemplate
+                    // 编辑完成（回车/失焦）时保存；属性赋值而非 set 方法（WRITE 属性）
+                    onEditingFinished: {
+                        if (text !== dccData.filenameTemplate) {
+                            dccData.filenameTemplate = text;
                         }
                     }
-                    Button {
-                        text: qsTr("恢复默认")
-                        onClicked: dccData.filenameTemplate = "{title}-{jobid}-{date}-{time}"
-                    }
+                }
+                Button {
+                    text: qsTr("恢复默认")
+                    implicitWidth: 74
+                    onClicked: dccData.filenameTemplate = "{title}-{jobid}-{date}-{time}"
                 }
             }
         }

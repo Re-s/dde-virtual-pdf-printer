@@ -1,14 +1,34 @@
 #include "printermanager.h"
 #include "configmanager.h"
 
+#include <QDebug>
 #include <QDesktopServices>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QStandardPaths>
+#include <QTextStream>
+#include <QUrl>
+
+namespace {
+// 与插件共用同一日志文件（控制中心 stderr 被重定向 /dev/null，qDebug 不可见）
+void pmWriteLog(const QString &msg)
+{
+    const QString dir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+    QDir().mkpath(dir);
+    QFile f(dir + QStringLiteral("/pdfprinter.log"));
+    if (f.open(QIODevice::Append | QIODevice::Text)) {
+        QTextStream ts(&f);
+        ts << QDateTime::currentDateTime().toString(QStringLiteral("yyyy-MM-dd hh:mm:ss.zzz"))
+           << QLatin1Char(' ') << msg << QLatin1Char('\n');
+    }
+}
+} // namespace
+
 #include <QProcess>
 #include <QProcessEnvironment>
 #include <QRegularExpression>
-#include <QUrl>
+#include <QDateTime>
 
 #include <algorithm>
 
@@ -99,7 +119,14 @@ bool PrinterManager::removePrinter()
 
 bool PrinterManager::openOutputDir()
 {
-    return QDesktopServices::openUrl(QUrl::fromLocalFile(outputDir()));
+    const QString dir = outputDir();
+    // Qt6 的 QDesktopServices::openUrl 在 deepin 上走 xdg-desktop-portal OpenURI
+    // （异步 D-Bus），portal 调用失败时 openUrl 仍返回 true 且无窗口——
+    // 实测终端 xdg-open 正常，故直接用 QProcess 调 xdg-open 绕过。
+    const bool ok = QProcess::startDetached(QStringLiteral("xdg-open"), { dir });
+    pmWriteLog(QStringLiteral("[pdfprinter] RESULT PrinterManager::openOutputDir dir=%1 -> %2")
+                   .arg(dir, ok ? QStringLiteral("OK") : QStringLiteral("FAIL")));
+    return ok;
 }
 
 QStringList PrinterManager::listPdfFiles() const
@@ -120,7 +147,12 @@ QStringList PrinterManager::listPdfFiles() const
 
 bool PrinterManager::openPdfFile(const QString &fileName) const
 {
-    return QDesktopServices::openUrl(QUrl::fromLocalFile(QDir(outputDir()).filePath(fileName)));
+    const QString path = QDir(outputDir()).filePath(fileName);
+    // 同 openOutputDir：绕开 Qt6 portal 路径，直接 xdg-open（终端实测可靠）
+    const bool ok = QProcess::startDetached(QStringLiteral("xdg-open"), { path });
+    pmWriteLog(QStringLiteral("[pdfprinter] RESULT PrinterManager::openPdfFile file=%1 -> %2")
+                   .arg(path, ok ? QStringLiteral("OK") : QStringLiteral("FAIL")));
+    return ok;
 }
 
 bool PrinterManager::deletePdfFile(const QString &fileName) const

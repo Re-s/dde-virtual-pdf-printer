@@ -11,7 +11,11 @@
 #include <QDBusReply>
 #include <QDesktopServices>
 #include <QDir>
+#include <QFile>
 #include <QFileInfo>
+#include <QDebug>
+#include <QStandardPaths>
+#include <QTextStream>
 #include <QUrl>
 #include <QVariantList>
 #include <QVariantMap>
@@ -25,6 +29,38 @@
 #include "dccfactory.h"
 
 namespace {
+
+// debug 模式日志：每个 Q_INVOKABLE 功能调用都会写入日志文件，方便排查"按钮点了没反应"。
+// 注意：控制中心进程 stdout/stderr 被 deepin 会话重定向到 /dev/null，且
+// QT_LOGGING_RULES 屏蔽 qDebug/qInfo——必须直接写文件才能看到。
+void writeLog(const QString &msg)
+{
+    const QString dir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+    QDir().mkpath(dir);
+    QFile f(dir + QStringLiteral("/pdfprinter.log"));
+    if (f.open(QIODevice::Append | QIODevice::Text)) {
+        QTextStream ts(&f);
+        ts << QDateTime::currentDateTime().toString(QStringLiteral("yyyy-MM-dd hh:mm:ss.zzz"))
+           << QLatin1Char(' ') << msg << QLatin1Char('\n');
+    }
+}
+
+void logCall(const QString &feature, const QString &detail = {})
+{
+    const QString msg = QStringLiteral("[pdfprinter] CALL %1%2")
+                            .arg(feature,
+                                 detail.isEmpty() ? QString() : QStringLiteral(" | ") + detail);
+    writeLog(msg);
+    qDebug().noquote() << msg;  // 保险：能进 journal 则双通道
+}
+
+void logResult(const QString &feature, bool ok)
+{
+    const QString msg = QStringLiteral("[pdfprinter] RESULT %1 -> %2")
+                            .arg(feature, ok ? QStringLiteral("OK") : QStringLiteral("FAIL"));
+    writeLog(msg);
+    qDebug().noquote() << msg;
+}
 
 // Human-readable file size: 523 B, 12.5 KB, 3.42 MB, ...
 QString formatFileSize(qint64 bytes)
@@ -174,6 +210,7 @@ QString PdfPrinterModule::lastError() const
 
 bool PdfPrinterModule::createPrinter()
 {
+    logCall(QStringLiteral("createPrinter"));
     if (!d->busy) {
         d->busy = true;
         Q_EMIT busyChanged();
@@ -196,6 +233,7 @@ bool PdfPrinterModule::createPrinter()
 
 bool PdfPrinterModule::removePrinter()
 {
+    logCall(QStringLiteral("removePrinter"));
     if (!d->busy) {
         d->busy = true;
         Q_EMIT busyChanged();
@@ -218,6 +256,7 @@ bool PdfPrinterModule::removePrinter()
 
 void PdfPrinterModule::refreshPdfList()
 {
+    logCall(QStringLiteral("refreshPdfList"));
     const QStringList files = d->printerManager->listPdfFiles();
 
     // Diff against the previous snapshot to find newly added PDFs (name-set
@@ -277,7 +316,9 @@ QVariantList PdfPrinterModule::pdfFileDetails() const
 
 bool PdfPrinterModule::openOutputDir()
 {
+    logCall(QStringLiteral("openOutputDir"), d->printerManager->outputDir());
     const bool ok = d->printerManager->openOutputDir();
+    logResult(QStringLiteral("openOutputDir"), ok);
     if (!ok) {
         d->lastError = QStringLiteral("open dir failed: 无法打开输出目录");
         Q_EMIT lastErrorChanged();
@@ -287,12 +328,14 @@ bool PdfPrinterModule::openOutputDir()
 
 bool PdfPrinterModule::openPdfFile(int index)
 {
+    logCall(QStringLiteral("openPdfFile"), QStringLiteral("index=%1").arg(index));
     if (index < 0 || index >= d->pdfFiles.size()) {
         d->lastError = QStringLiteral("invalid index: 文件索引超出范围");
         Q_EMIT lastErrorChanged();
         return false;
     }
     const bool ok = d->printerManager->openPdfFile(d->pdfFiles.at(index));
+    logResult(QStringLiteral("openPdfFile"), ok);
     if (!ok) {
         d->lastError = QStringLiteral("open failed: 无法打开 PDF 文件");
         Q_EMIT lastErrorChanged();
@@ -302,6 +345,7 @@ bool PdfPrinterModule::openPdfFile(int index)
 
 bool PdfPrinterModule::deletePdfFile(int index)
 {
+    logCall(QStringLiteral("deletePdfFile"), QStringLiteral("index=%1").arg(index));
     if (index < 0 || index >= d->pdfFiles.size()) {
         d->lastError = QStringLiteral("invalid index: 文件索引超出范围");
         Q_EMIT lastErrorChanged();
@@ -326,6 +370,7 @@ QString PdfPrinterModule::defaultOutputDir()
 
 void PdfPrinterModule::openOutputDirPicker()
 {
+    logCall(QStringLiteral("openOutputDirPicker"));
     // dde-control-center 是纯 QML 应用（QGuiApplication），不能使用
     // QFileDialog（QtWidgets 模块）——会因无 QApplication 直接崩溃。
     // 方案：通过 D-Bus 调用 deepin 官方文件对话框服务

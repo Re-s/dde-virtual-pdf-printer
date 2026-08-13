@@ -120,10 +120,10 @@ bool PrinterManager::removePrinter()
 bool PrinterManager::openOutputDir()
 {
     const QString dir = outputDir();
-    // Qt6 的 QDesktopServices::openUrl 在 deepin 上走 xdg-desktop-portal OpenURI
-    // （异步 D-Bus），portal 调用失败时 openUrl 仍返回 true 且无窗口——
-    // 实测终端 xdg-open 正常，故直接用 QProcess 调 xdg-open 绕过。
-    const bool ok = QProcess::startDetached(QStringLiteral("xdg-open"), { dir });
+    // 系统级问题：xdg-desktop-portal-dde 的 OpenURI 后端失效，QDesktopServices::openUrl
+    // 和 xdg-open 都走 portal（返回 true 但不开窗口，实测 gio open 同样失败）。
+    // 直接启动 dde-file-manager 绕过 portal（实测 11:49 成功打开窗口）。
+    const bool ok = QProcess::startDetached(QStringLiteral("dde-file-manager"), { dir });
     pmWriteLog(QStringLiteral("[pdfprinter] RESULT PrinterManager::openOutputDir dir=%1 -> %2")
                    .arg(dir, ok ? QStringLiteral("OK") : QStringLiteral("FAIL")));
     return ok;

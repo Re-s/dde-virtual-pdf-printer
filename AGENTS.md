@@ -181,6 +181,29 @@ lp -d Deepin-PDF /path/to/file && ls -t ~/PDF/ | head -1   # 打印 → PDF
 - ✅ 文件写入仅限用户配置的输出目录
 - 新增代码保持同等约束，否则评审不过
 
+## 8.5 命名审查（防误导 deepin 官方，必做）
+
+**对外可见的名称一律不得包含 "deepin"**（防止用户误以为是 deepin 官方出品）：
+
+| 范围 | 要求 |
+| --- | --- |
+| 作品名 / 仓库名 | ✅ 用 DDE 生态表述（如「DDE 虚拟 PDF 打印机」/ `dde-virtual-pdf-printer`） |
+| deb 包名 / 可执行名 / 应用显示名 | ❌ 不得含 `deepin`（如 `deepin-pdf-printer`、`deepinpdf` 均违规） |
+| 帮助页版本号 / README 标题 | ❌ 不得含 `deepin`（版本展示如 `dde-pdf-printer vX.Y.Z`） |
+| 插件显示名 | ✅ 「PDF 打印机」（模块名 `pdfprinter` 无 deepin 字样） |
+
+**允许保留**（技术事实描述，非名称宣传）：
+- 运行平台表述（"在 deepin 上运行"）
+- 系统服务名（`com.deepin.filemanager.filedialog`）、系统路径（`/usr/share/dsg`）
+- 配置命名空间 `org.deepin.dde.pdfprinter`（反向域名惯例，非作品名）
+
+**发布前检查**：
+```bash
+# 对外名称扫描（包名/显示名/标题/版本串，排除技术引用）
+grep -rniE 'deepin-(pdf|printer)|deepinpdf' debian/ src/ README.md AGENTS.md docs/contest-post.md
+# 结果必须为空或仅注释/技术描述
+```
+
 ## 9. 许可证与参赛
 
 - GPL-3.0-or-later；基于 deepin Skills 开发，参赛作品

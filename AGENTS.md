@@ -208,3 +208,19 @@ grep -rniE 'deepin-(pdf|printer)|deepinpdf' debian/ src/ README.md AGENTS.md doc
 
 - GPL-3.0-or-later；基于 deepin Skills 开发，参赛作品
 - 文档：`docs/design.md`（架构）、`docs/security-audit.md`（安全审查）、`docs/forum-print-survey.md`（需求调研）
+
+### 5.8 .desktop 唤起控制中心（2026-08 实测，按 dcc-plugin-integration.md 3.0）
+- **命令行 `dde-control-center` 启动只注册 D-Bus 服务，不显示窗口**（窗口行为不稳定，
+  表现为「有时候能唤起有时候不能」）——.desktop Exec **不要**直接启动 dde-control-center。
+- **正确序列（纯 D-Bus activation）**：先 `Show`（activation 拉起 UI 实例 + 显示窗口，
+  已运行则唤回），再 `ShowModule string:<module>` 导航到插件页：
+  ```sh
+  for i in 1 2 3 4 5 6 7 8; do
+    dbus-send --session --dest=org.deepin.dde.ControlCenter1 --type=method_call \
+      /org/deepin/dde/ControlCenter1 org.deepin.dde.ControlCenter1.Show 2>/dev/null && break
+    sleep 0.5
+  done
+  dbus-send --session --dest=org.deepin.dde.ControlCenter1 --type=method_call \
+    /org/deepin/dde/ControlCenter1 org.deepin.dde.ControlCenter1.ShowModule string:pdfprinter
+  ```
+- 实测三场景全过：未运行（activation 拉起+显示）/ 已运行+隐藏（Show 唤回）/ 已运行+显示（幂等导航）。

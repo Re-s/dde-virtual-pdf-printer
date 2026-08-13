@@ -1,0 +1,87 @@
+name: build-deb
+
+# 多架构 deb 构建：amd64 / arm64 / loong64
+# 方案：debootstrap deepin beige rootfs + chroot 构建
+#   - amd64 / arm64: GitHub 原生 runner（ubuntu-24.04 / ubuntu-24.04-arm）
+#   - loong64: x86_64 runner + qemu-user-static 模拟（GitHub 无 loong64 runner）
+
+on:
+  push:
+    branches: [master, dev]
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: ${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+          - arch: loong64
+            runner: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install cross-arch bootstrap tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y debootstrap qemu-user-static
+
+      - name: Bootstrap deepin beige rootfs (${{ matrix.arch }})
+        run: |
+          # deepin 不在 debootstrap 官方脚本里，用 sid 脚本代替（beige 基于 Debian 12）
+          sudo cp /usr/share/debootstrap/scripts/sid /usr/share/debootstrap/scripts/beige
+          if [ "${{ matrix.arch }}" = "loong64" ]; then
+            # 非本机架构：--foreign 二阶段 + qemu 用户态模拟
+            sudo debootstrap --arch=loong64 --foreign --no-check-gpg --variant=minbase \
+              beige /tmp/rootfs https://community-packages.deepin.com/beige
+            sudo cp /usr/bin/qemu-loongarch64-static /tmp/rootfs/usr/bin/
+            sudo chroot /tmp/rootfs /debootstrap/debootstrap --second-stage
+          else
+            sudo debootstrap --arch=${{ matrix.arch }} --no-check-gpg --variant=minbase \
+              beige /tmp/rootfs https://community-packages.deepin.com/beige
+          fi
+
+      - name: Configure apt sources + install build deps
+        run: |
+          sudo tee /tmp/rootfs/etc/apt/sources.list > /dev/null <<'EOF'
+          deb https://community-packages.deepin.com/beige beige main community
+          EOF
+          sudo chroot /tmp/rootfs apt-get update
+          sudo chroot /tmp/rootfs env DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            build-essential cmake git python3 \
+            qt6-base-dev qt6-declarative-dev qt6-tools-dev linguist-qt6 \
+            libdtk6core-dev libdtk6gui-dev dde-control-center-dev
+
+      - name: Copy source + build plugin
+        run: |
+          sudo mkdir -p /tmp/rootfs/src
+          sudo cp -a . /tmp/rootfs/src/
+          sudo chroot /tmp/rootfs bash -c \
+            'cd /src && mkdir -p build && cd build && \
+             cmake ../src/plugin -DCMAKE_INSTALL_PREFIX=/usr && \
+             make -j$(nproc)'
+
+      - name: Package deb
+        run: |
+          sudo chroot /tmp/rootfs bash -c 'cd /src && bash ci/package-deb.sh ${{ matrix.arch }}'
+
+      - name: Sanity check deb contents
+        run: |
+          DEB=$(ls /tmp/rootfs/src/deepin-pdf-printer_*_${{ matrix.arch }}.deb | head -1)
+          echo "=== $DEB ==="
+          dpkg-deb --info "$DEB" | grep -E 'Package|Version|Architecture'
+          dpkg-deb --contents "$DEB" | grep -E '\.so|backend|\.dci' | head -6
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: deepin-pdf-printer-${{ matrix.arch }}
+          path: /tmp/rootfs/src/deepin-pdf-printer_*_${{ matrix.arch }}.deb

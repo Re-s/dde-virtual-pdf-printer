@@ -140,6 +140,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="${{ github.ref_name }}"
+          REPO="${{ github.repository }}"
           DEBS=$(find dist -name 'deepin-pdf-printer_*.deb' | sort)
           echo "发布 $TAG 资产："
           echo "$DEBS"
@@ -148,12 +149,26 @@ jobs:
           * amd64 / arm64 / loong64 三个 .deb
           * 构建方式：debootstrap deepin beige rootfs + chroot（loong64 经 QEMU 用户态模拟）
           * 安装：sudo apt install ./deepin-pdf-printer_<版本>_<架构>.deb"
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            echo "Release $TAG 已存在，更新资产"
-            gh release upload "$TAG" $DEBS --clobber
-          else
+          # 确保 release 存在（已存在则复用）
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
             echo "创建 Release $TAG"
-            gh release create "$TAG" $DEBS --title "$TAG" --notes "$NOTES"
+            gh release create "$TAG" --title "$TAG" --notes "$NOTES"
           fi
+          # 上传 deb（先删同名旧资产，再 POST uploads——gh --clobber 有 404 bug，手动实现）
+          for deb in $DEBS; do
+            NAME=$(basename "$deb")
+            # 1. 删除同名旧资产
+            gh api "repos/$REPO/releases/tags/$TAG/assets" --paginate \
+              --jq '.[] | select(.name == "'"$NAME"'") | .id' 2>/dev/null | while read -r AID; do
+              echo "删除旧资产 $NAME (id=$AID)"
+              gh api -X DELETE "repos/$REPO/releases/assets/$AID" >/dev/null 2>&1 || true
+            done
+            # 2. 上传（手动解析 upload_url，避免 gh 内部 bug）
+            UPURL=$(gh api "repos/$REPO/releases/tags/$TAG" --jq '.upload_url' | sed 's/{?name,label}//')
+            echo "上传 $NAME"
+            gh api -X POST "$UPURL?name=$NAME" -H "Content-Type: application/vnd.debian.binary-package" \
+              --input "$deb" >/dev/null || { echo "FAIL 上传 $NAME"; exit 1; }
+          done
+          # 验证
           gh release view "$TAG" --json tagName,assets \
             --jq '.tagName + " | assets: " + ([.assets[].name] | join(", "))'

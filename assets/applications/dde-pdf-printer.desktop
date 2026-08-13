@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Name=DDE PDF Printer
+Name[zh_CN]=DDE PDF 打印机
+GenericName=Virtual PDF Printer
+GenericName[zh_CN]=虚拟 PDF 打印机
+Comment=Print documents to PDF files (DDE Control Center plugin)
+Comment[zh_CN]=将文档打印为 PDF 文件（DDE 控制中心插件）
+Exec=dbus-send --session --dest=org.deepin.dde.ControlCenter1 --type=method_call /org/deepin/dde/ControlCenter1 org.deepin.dde.ControlCenter1.ShowPage string:pdfprinter
+Icon=dcc_pdfprinter
+Terminal=false
+Categories=Utility;
+X-Deepin-Vendor=user-custom
+StartupNotify=false

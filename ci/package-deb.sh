@@ -34,6 +34,10 @@ if ! find "$ROOT/usr" -name 'dcc_pdfprinter.dci' 2>/dev/null | grep -q .; then
     cp "$SRC/assets/icons/dcc_pdfprinter.dci" "$ROOT/usr/share/dsg/icons/"
 fi
 
+# 3.5 桌面入口（.desktop，deepin 打包规范：应用中心据此提供系统卸载能力；644 权限）
+mkdir -p "$ROOT/usr/share/applications"
+install -m 644 "$SRC/assets/applications/dde-pdf-printer.desktop" "$ROOT/usr/share/applications/"
+
 # 4. DEBIAN 脚本
 cp "$SRC"/debian/dde-pdf-printer.postinst "$ROOT/DEBIAN/postinst"
 cp "$SRC"/debian/dde-pdf-printer.prerm "$ROOT/DEBIAN/prerm"

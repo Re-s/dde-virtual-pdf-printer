@@ -137,7 +137,7 @@ DccObject {
                 implicitHeight: 44
                 Text {
                     anchors.fill: parent
-                    text: qsTr("在「设置」页点击「选择目录…」，选择任意文件夹作为输出目录")
+                    text: qsTr("在「设置」页点击「选择目录」，选择任意文件夹作为输出目录")
                     wrapMode: Text.WordWrap
                     elide: Text.ElideRight
                     verticalAlignment: Text.AlignVCenter

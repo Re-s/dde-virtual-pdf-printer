@@ -45,8 +45,8 @@ DccObject {
                     text: dccData.outputDir
                 }
                 Button {
-                    text: qsTr("选择目录…")
-                    implicitWidth: 110  // 5 字符+省略号，84px 会被截断成 ...
+                    text: qsTr("选择目录")
+                    implicitWidth: 110
                     onClicked: {
                         // C++ 侧通过 D-Bus 异步弹出 deepin 原生目录选择对话框，
                         // 结果经 onOutputDirPicked 信号回写（不阻塞主线程）

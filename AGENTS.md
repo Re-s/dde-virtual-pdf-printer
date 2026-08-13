@@ -107,6 +107,18 @@ lp -d Deepin-PDF somefile.txt        # 打印 → ~/PDF/ 或配置目录出现 .
 - 插件懒加载：控制中心导航到模块才 dlopen（`/proc/<pid>/maps` 可查加载）
 - QML 磁盘缓存：`~/.cache/deepin/dde-control-center/qmlcache/`，改 QML 后建议清掉
 
+### 5.6 系统级事故教训（2026-08 实测）
+- **多架构（arm64）撤销会连带卸载系统组件**：`apt-get install -y -f` 修复 broken 依赖时，
+  可能把 `dde-daemon`/`dde-control-center` 一起卸掉（依赖链断裂）。撤销后必须验证
+  `dpkg -l dde-daemon dde-control-center` 仍是 `ii`，否则控制中心直接消失。
+- **bind mount 残留卡 dpkg**：若 `/usr/libexec/dde-daemon/keybinding/*` 下有「设备或资源忙」
+  无法删除的文件，先 `mount | grep <路径>` 检查是否是独立挂载点 → `sudo umount` 后再删。
+  这类残留来自调试时用 `mount --bind` 覆盖系统脚本（如 GrandSearch noop 测试）。
+- **卸载插件后控制中心残留进程仍在内存**：插件文件删除后，运行中的控制中心仍显示模块
+  （.so 在内存），但图标/悬停态因文件缺失显示空白——重装插件 + 重启控制中心即可恢复。
+- **deepin-immutable-ctl 与 dpkg 冲突**：`/usr` 是 usr-overlay，装系统包务必走 deb，
+  不要手动 cp（upperdir 与 overlay 语义不同，会制造 bind mount 类残留）。
+
 ## 6. 二次开发常见任务指引
 
 | 想做什么 | 改哪里 |

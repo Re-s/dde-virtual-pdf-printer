@@ -75,7 +75,14 @@ jobs:
 
       - name: Package deb
         run: |
-          sudo chroot /tmp/rootfs bash -c 'cd /src && bash ci/package-deb.sh ${{ matrix.arch }}'
+          set -x
+          sudo chroot /tmp/rootfs bash -x -c 'cd /src && bash ci/package-deb.sh ${{ matrix.arch }}' \
+            2>&1 | tee /tmp/pkg.log || true
+          # 失败时输出完整尾部（GitHub 日志页可见）
+          echo "=== pkg.log tail ==="
+          tail -40 /tmp/pkg.log
+          # 检查产物是否存在（决定步骤成败）
+          ls -la /tmp/rootfs/src/deepin-pdf-printer_*.deb 2>/dev/null || exit 1
 
       - name: Sanity check deb contents
         run: |

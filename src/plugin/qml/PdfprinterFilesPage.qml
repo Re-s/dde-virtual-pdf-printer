@@ -5,9 +5,24 @@ import QtQuick.Layouts 1.15
 import org.deepin.dcc 1.0
 
 // PDF 文件列表页：显示输出目录中的 PDF 文件（图标 + 名称 + 大小 + 修改时间），
-// 交互：点击整行或『打开』按钮打开文件，『删除』按钮（带确认）删除文件，顶部刷新 / 打开目录。
+// 交互：点击整行或『打开』按钮打开文件，『删除』按钮删除文件，顶部刷新 / 打开目录。
 DccObject {
     id: root
+
+    // 每次进入本页时主动刷新列表：DccApp.activeObject 是框架导航的当前活动对象，
+    // 导航到本页（点击/搜索/ShowPage 任一方式）时 activeObject === root → 刷新。
+    // （onActive 仅对可点击对象触发；DccObject.visible 是模块可见性，均不可靠）
+    Connections {
+        target: DccApp
+        function onActiveObjectChanged() {
+            if (DccApp.activeObject === root) {
+                dccData.refreshPdfList()
+            }
+        }
+    }
+
+    // Menu 类型：page 默认 DccRightView（可滚动），文件多时可滚动查看
+    pageType: DccObject.Menu
 
     // 系统主题色（跟随亮/暗色，兼容 Qt5/Qt6 的纯 QtQuick 取色方式）
     SystemPalette {

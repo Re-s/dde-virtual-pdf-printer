@@ -31,7 +31,7 @@ DccObject {
             name: "outputDir"
             parentName: root.name + "/settingsGroup"
             displayName: qsTr("输出目录")
-            description: qsTr("生成的 PDF 文件保存位置")
+            description: qsTr("生成的 PDF 文件保存位置，默认 ~/PDF，可自定义任意文件夹")
             weight: 10
             pageType: DccObject.Editor
             page: RowLayout {

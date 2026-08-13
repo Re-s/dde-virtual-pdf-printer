@@ -209,12 +209,14 @@ grep -rniE 'deepin-(pdf|printer)|deepinpdf' debian/ src/ README.md AGENTS.md doc
 - GPL-3.0-or-later；基于 deepin Skills 开发，参赛作品
 - 文档：`docs/design.md`（架构）、`docs/security-audit.md`（安全审查）、`docs/forum-print-survey.md`（需求调研）
 
-### 5.8 .desktop 唤起控制中心（2026-08 实测）
-- **`dde-control-center --show` 是官方唤起参数**：未运行 → 启动并显示窗口；已运行+隐藏 → 唤回
-  （单实例自动处理）。命令行不带参数启动只注册 D-Bus 服务不显示窗口（「有时候唤不起来」根因）。
-- **显示 + 导航插件页**（.desktop Exec 推荐，until 等待服务就绪）：
-  ```ini
-  Exec=sh -c "dde-control-center --show & until dbus-send --session --dest=org.deepin.dde.ControlCenter1 --type=method_call /org/deepin/dde/ControlCenter1 org.deepin.dde.ControlCenter1.ShowModule string:pdfprinter 2>/dev/null; do sleep 0.5; done"
-  ```
-- 实测三场景全过（未运行启动+显示 / 隐藏唤回 / 显示幂等），截图确认 ShowModule 导航到插件页。
+### 5.8 .desktop 唤起控制中心（2026-08 实测，源码依据 main.cpp）
+- **官方一行直达：`dde-control-center -m <module>`**——启动后 `ShowPage(module)` + `Show()`，
+  显示窗口并导航到指定模块（如 `-m pdfprinter` 直达 PDF 打印机插件页）。
+  源码（dde-control-center main.cpp）：`-m/--module`、`-p/--page`（子页面，拼成 module/page）、
+  `-s/--show`（显示，默认隐藏）、`-t/--toggle`、`-d/--dbus`。
+- **DTK 单例参数响应**：控制中心已在运行时，新实例参数通过 `newProcessInstance` 信号
+  交给原进程执行（showPage + show）——已运行场景同样有效，无需 D-Bus 手动调用。
+- **.desktop Exec 推荐**：`Exec=dde-control-center -m pdfprinter`（显示 + 导航一行搞定）。
+- 备选（仅唤起不导航）：`Exec=dde-control-center --show`。
+- 实测：未运行 → 窗口显示 + 侧边栏选中插件模块；已运行 → 单例响应正常。
 

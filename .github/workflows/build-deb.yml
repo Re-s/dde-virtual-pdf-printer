@@ -127,7 +127,7 @@ jobs:
           ls -la /tmp/rootfs/src/dde-pdf-printer_*.deb 2>/dev/null || exit 1
 
       - name: Upload artifacts (always)
-        if: always()
+        if: ${{ always() && !(github.ref == 'refs/heads/dev' && matrix.arch != 'amd64') }}
         uses: actions/upload-artifact@v4
         with:
           name: pkg-output-${{ matrix.arch }}
@@ -136,6 +136,7 @@ jobs:
             /tmp/rootfs/src/ci-pkg.log
 
       - name: Sanity check deb contents
+        if: ${{ !(github.ref == 'refs/heads/dev' && matrix.arch != 'amd64') }}
         run: |
           DEB=$(ls /tmp/rootfs/src/dde-pdf-printer_*_${{ matrix.arch }}.deb | head -1)
           echo "=== $DEB ==="
@@ -143,6 +144,7 @@ jobs:
           dpkg-deb --contents "$DEB" | grep -E '\.so|backend|\.dci' | head -6
 
       - name: Upload artifact
+        if: ${{ !(github.ref == 'refs/heads/dev' && matrix.arch != 'amd64') }}
         uses: actions/upload-artifact@v4
         with:
           name: dde-pdf-printer-${{ matrix.arch }}

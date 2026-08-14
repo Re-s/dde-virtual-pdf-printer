@@ -115,3 +115,21 @@ keepTitleExtension）、stdin 数据流、discover 模式。
 - copies：isdigit 校验；options：不解析执行
 - stdin 数据：字节流直写（无解析执行）；PJL 剥离仅定位 %PDF 魔数
 - 配置损坏：configparser 异常回退默认目录
+
+## 全项目安全复审查（2026-08-14，dfyx 白盒审计协议 10 维度）
+
+按 SecSkills 索引装载的 dfyx_code_security_review 协议（三层分析法 + 10 安全维度）对全项目
+（C++ 插件 / Python backend / shell 维护脚本 / deb 打包）复审查：
+
+| 维度 | 结论 | 证据 |
+| --- | --- | --- |
+| D1 注入 | ✅ | QProcess 全参数化（lpadmin/lpstat/dde-open/dde-file-manager 均列表参数）；backend `su -c` shlex.quote；模板渲染后整体 sanitize；postinst/prerm 固定参数无用户输入 |
+| D2 认证 | ✅ | 无认证面（本地控制中心插件，无网络服务） |
+| D3 授权 | ✅ | backend root 写入限用户家目录（realpath 校验）；chown 目标用户；维护脚本 root 操作白名单 |
+| D4 反序列化 | ✅ | 无 pickle/json 反序列化 |
+| D5 文件操作 | ✅ | 路径穿越 sanitize（basename+白名单）；symlink 逃逸已修；无临时文件 |
+| D6 SSRF | ✅ | 无网络外连（backend 纯本地，Python 标准库） |
+| D7 加密 | ✅ | 无敏感数据/密钥 |
+| D8 配置 | ✅ | 配置损坏回退默认；日志无敏感信息；错误信息仅路径 |
+| D9 业务逻辑 | ✅ | 文件名唯一（jobid+毫秒时间戳）；TOCTOU 窗口毫秒级本地无利；打印机迁移幂等 |
+| D10 供应链 | ✅（补强） | 依赖系统包（Qt6/DTK6/CUPS）；backend 纯标准库；**补充 `Recommends: dde-api`**（dde-open 归属包）；清理 `debian/deepin-pdf-printer/` 旧名残留（git 跟踪 0） |

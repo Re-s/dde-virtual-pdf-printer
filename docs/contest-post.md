@@ -29,6 +29,7 @@
 - ✅ **输出目录可自定义**：插件与 backend 统一读配置，修改后全局生效
 - ✅ **多架构支持**：GitHub Actions 自动构建 **amd64 / arm64 / loong64** 三架构 deb 并发布 Release
 - ✅ **功能调用日志**：每次操作记录到 `~/.cache/deepin/dde-control-center/pdfprinter.log`（含版本号），便于问题排查
+- ✅ **系统卸载入口**：随包安装 `.desktop` 桌面入口（deepin 应用中心识别为可卸载应用），点击直达插件页
 - ✅ **安装即用**：deb 包 postinst 自动创建打印机
 - ✅ **中文界面** + DCI 图标，深度融入 DDE 设计语言
 
@@ -36,15 +37,15 @@
 
 | 控制中心入口 | 打印机状态 |
 | --- | --- |
-| ![入口](https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.7.2/00-home.png) | ![状态](https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.7.2/01-status.png) |
+| ![入口](https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.8.2/00-home.png) | ![状态](https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.8.2/01-status.png) |
 
 | PDF 文件列表 | 设置 |
 | --- | --- |
-| ![文件列表](https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.7.2/02-files.png) | ![设置](https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.7.2/03-settings.png) |
+| ![文件列表](https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.8.2/02-files.png) | ![设置](https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.8.2/03-settings.png) |
 
 | 帮助 | 输出目录（生成的 PDF） |
 | --- | --- |
-| ![帮助](https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.7.2/04-help.png) | ![输出目录](https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.7.2/11-output-dir.png) |
+| ![帮助](https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.8.2/04-help.png) | ![输出目录](https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.8.2/11-output-dir.png) |
 
 ## 四、安装方式
 
@@ -54,8 +55,8 @@
 
 ```bash
 # 按你的系统架构选择（x86_64 用 amd64；飞腾/鲲鹏等 ARM 用 arm64；龙芯用 loong64）
-wget https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.7.2/dde-pdf-printer_0.7.2_amd64.deb
-sudo dpkg -i dde-pdf-printer_0.7.2_amd64.deb
+wget https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.8.2/dde-pdf-printer_0.8.2_amd64.deb
+sudo dpkg -i dde-pdf-printer_0.8.2_amd64.deb
 ```
 
 安装完成即自动创建「DDE-PDF」打印机，打开任意应用打印对话框即可使用。
@@ -111,7 +112,7 @@ cmake --build build/integration -j$(nproc)
 
 ### AI 工具调用 deepin Skills 对话记录截图
 
-![AI 对话记录](https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.7.2/05-ai-dialogue.png)
+![AI 对话记录](https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.8.2/05-ai-dialogue.png)
 
 > 上图展示 AI 编程工具调用 deepin Skills（dde-control-center-development / dtk-development / deepin-25-platform）辅助开发的关键过程：POC 验证 → 契约化并行开发 → 目录选择闪退修复（D-Bus 方案）→ 回写修复（WRITE 属性/QML 缓存）→ P0 增强与发布。
 
@@ -132,4 +133,4 @@ cmake --build build/integration -j$(nproc)
 | 需求调研（2000 帖分析） | https://github.com/Re-s/dde-virtual-pdf-printer/blob/master/docs/forum-print-survey.md |
 | 安全审查报告 | https://github.com/Re-s/dde-virtual-pdf-printer/blob/master/docs/security-audit.md |
 
-**Release**：https://github.com/Re-s/dde-virtual-pdf-printer/releases/tag/v0.7.2 （三架构 deb 包 + 截图，GitHub Actions 自动构建发布）
+**Release**：https://github.com/Re-s/dde-virtual-pdf-printer/releases/tag/v0.8.2 （三架构 deb 包 + 截图，GitHub Actions 自动构建发布）

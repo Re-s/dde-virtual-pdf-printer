@@ -133,3 +133,29 @@ keepTitleExtension）、stdin 数据流、discover 模式。
 | D8 配置 | ✅ | 配置损坏回退默认；日志无敏感信息；错误信息仅路径 |
 | D9 业务逻辑 | ✅ | 文件名唯一（jobid+毫秒时间戳）；TOCTOU 窗口毫秒级本地无利；打印机迁移幂等 |
 | D10 供应链 | ✅（补强） | 依赖系统包（Qt6/DTK6/CUPS）；backend 纯标准库；**补充 `Recommends: dde-api`**（dde-open 归属包）；清理 `debian/deepin-pdf-printer/` 旧名残留（git 跟踪 0） |
+
+## codex 子 Agent 复审查修复（2026-08-14，kimi-k2.7-code 独立审计）
+
+子 Agent（全新上下文，仅见源码 + dfyx 方法论）发现 8 项（高 3 / 中 3 / 低 2）。逐项核实后：
+
+### 确认并修复（3 项）
+| 发现 | codex 严重度 | 核实结论 | 修复 |
+| --- | --- | --- | --- |
+| backend 读 CUPS filename 未限路径（root 读任意文件） | 中 | **真实**（可达性低：backend 700 root 仅 CUPS 可调，但纵深必须修） | ✅ 仅接受 `/var/spool/cups/` 前缀，其余回退 stdin；实测 `/etc/hostname` 被拒 + CUPS 正常打印回归通过 |
+| postrm `/home/*` 通配符清理配置 | 中 | 真实（低危：purge 语义本就删配置） | ✅ 改 `getent passwd` 遍历真实家目录（保留 rmdir 空目录行为） |
+| 日志无限增长 + 权限 | 低 | 真实（本地 DoS） | ✅ 512KB 上限 + 600 权限（插件与 service 两处统一） |
+
+### 纵深防御（2 项）
+| 发现 | 核实 | 处置 |
+| --- | --- | --- |
+| outputDir realpath 校验 TOCTOU | 理论高/实际极难（毫秒窗口需精确竞态） | ✅ 写入前二次 realpath 校验（低成本纵深） |
+| su -c 分支 username | **误判**：username 经 subprocess argv 传递（非 shell 拼接），无注入 | 注释说明（不动代码） |
+
+### 确认安全（3 项）
+- filenameTemplate 模板注入：已 sanitize（codex 自认无穿越，仅建议白名单）
+- openPdfFile 字符串接口：实际调用走索引（内部枚举），安全
+- deletePdfFile const_cast：风格问题，无安全影响
+
+### 其他
+- debian/rules + changelog 旧名 `deepin-pdf-printer`/`deepinpdf`（dpkg-buildpackage 备选路径）→ ✅ 已改新名（对外违规清除）
+- 独立审查报告归档：`docs/security-reviews/independent-audit-codex.md`（第二版）+ 对比报告 `docs/security-reviews/comparison-report.md`

@@ -204,8 +204,9 @@ def main():
     options = sys.argv[5] if len(sys.argv) > 5 else ''
     filename = sys.argv[6] if len(sys.argv) > 6 else None
 
-    # 读取数据
-    if filename and os.path.exists(filename):
+    # 读取数据：仅接受 CUPS spool 目录下的 filename（root 后端禁止读取任意路径，
+    # 防止 CUPS 链外调用读任意文件；其他情况一律回退 stdin）
+    if filename and filename.startswith('/var/spool/cups/') and os.path.exists(filename):
         with open(filename, 'rb') as f:
             data = f.read()
     else:
@@ -233,6 +234,14 @@ def main():
     # 保留毫秒防同秒同名覆盖（strftime %f 在 Linux 不支持微秒，手动取）
     ts_ms = int((now - int(now)) * 1000)
     outpath = os.path.join(outdir, f'{base}{ts_ms:03d}.pdf')
+
+    # 【TOCTOU 纵深防御】写入前二次校验：realpath 校验与写入之间存在极小竞态窗口，
+    # 写入前再次确认输出目录解析后仍位于用户家目录内（防止目录被替换为 symlink 逃逸）。
+    real_out = os.path.realpath(outdir)
+    real_home = os.path.realpath(pwd.getpwnam(username).pw_dir) if username != 'unknown' else os.path.realpath(os.path.expanduser('~'))
+    if not (real_out == real_home or real_out.startswith(real_home + os.sep)):
+        print(f'ERROR: 输出目录 {outdir} 解析后越界（目录被替换？），拒绝写入', file=sys.stderr)
+        return 1
 
     try:
         with open(outpath, 'wb') as f:

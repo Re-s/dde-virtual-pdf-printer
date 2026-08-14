@@ -5,13 +5,11 @@ set -e
 
 # 仅 purge（彻底清除）时清理配置；remove 保留配置便于重装
 if [ "$1" = "purge" ]; then
-    # 删除 QSettings 配置（非关键，用户数据保留）
-    rm -rf /home/*/.config/org.deepin.dde.pdfprinter 2>/dev/null || true
-    # 清空但保留 ~/PDF 输出目录（用户文件不能删）
-    for d in /home/*/PDF; do
-        [ -d "$d" ] || continue
-        # 仅删除空目录（若用户没文件）；有文件则保留
-        rmdir "$d" 2>/dev/null || true
+    # 遍历真实用户家目录清理配置（不用 /home/* 通配符，避免误展开非家目录）
+    for h in $(getent passwd | cut -d: -f6); do
+        rm -rf "$h/.config/org.deepin.dde.pdfprinter" 2>/dev/null || true
+        # 仅删除空 ~/PDF 目录（若用户没文件）；有文件则保留（用户数据不能删）
+        rmdir "$h/PDF" 2>/dev/null || true
     done
     echo "dde-pdf-printer: 已清理配置（用户 PDF 文件保留）" >&2
 fi

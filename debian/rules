@@ -6,10 +6,10 @@ override_dh_auto_build:
 	# backend 是纯脚本，无需编译
 
 override_dh_auto_install:
-	install -d $(CURDIR)/debian/deepin-pdf-printer/usr/lib/cups/backend
+	install -d $(CURDIR)/debian/dde-pdf-printer/usr/lib/cups/backend
 	# 权限必须 700（root:root 由 --root-owner-group 保证）：CUPS 对带 world 执行
 	# 位的 backend 以 lp 用户运行，将无法读取用户 700 的 ~/.config 配置
-	install -m 700 backend/deepinpdf $(CURDIR)/debian/deepin-pdf-printer/usr/lib/cups/backend/deepinpdf
+	install -m 700 backend/ddepdf $(CURDIR)/debian/dde-pdf-printer/usr/lib/cups/backend/ddepdf
 
 override_dh_installinit:
 	# 无 init 脚本

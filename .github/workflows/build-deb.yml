@@ -14,6 +14,8 @@ on:
 jobs:
   build:
     name: ${{ matrix.arch }}
+    # dev 分支只构建 amd64（省额度/存储）；master/tag 才全三架构
+    if: ${{ !(github.ref == 'refs/heads/dev' && matrix.arch != 'amd64') }}
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false

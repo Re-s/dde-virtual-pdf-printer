@@ -7,6 +7,21 @@ set(CMAKE_AUTOMOC ON)
 # arm64 链接报 dangerous relocation）
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+# 二进制加固（Debian/deepin hardening 规范，2026-08 安全审查发现缺 Stack Canary/FORTIFY/Full RELRO）：
+# - -O2：FORTIFY 需要优化级（默认构建无 -O 时 _FORTIFY_SOURCE 无效）
+# - -fstack-protector-strong：栈保护（Stack Canary）
+# - -D_FORTIFY_SOURCE=2：缓冲区函数加固（_chk 包装）
+# - -Wformat -Werror=format-security：格式串安全
+# - -ffile-prefix-map：源码绝对路径映射为相对路径（防止本机路径泄漏进二进制，脱敏）
+# - -z relro -z now：Full RELRO（GOT 只读）
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    get_filename_component(PROJ_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../.." ABSOLUTE)
+    add_compile_options(-O2 -fstack-protector-strong -D_FORTIFY_SOURCE=2
+                        -Wformat -Werror=format-security
+                        "-ffile-prefix-map=${PROJ_ROOT}=.")
+    add_link_options(-Wl,-z,relro -Wl,-z,now)
+endif()
+
 set(PLUGIN_NAME "pdfprinter")
 
 find_package(Qt6 COMPONENTS Core DBus LinguistTools REQUIRED)

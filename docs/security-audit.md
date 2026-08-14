@@ -1,6 +1,6 @@
 # 安全审查报告 — dde-pdf-printer
 
-> 审查日期：2026-08-12 | 版本：v0.4.9 基线（v0.8.x 持续适用）
+> 审查日期：2026-08-12 | 版本：v0.4.9 基线（v0.8.3 加固 + 复审查）
 > 审查范围：backend（root 运行 Python）+ C++ 服务层 + 控制中心插件（C++/QML）+ debian 打包
 > 审查重点：文件系统非法访问 / 异常外连 / 敏感数据采集
 
@@ -63,3 +63,28 @@
 ## 评审结论
 
 **通过** ✅ — 代码无网络外连能力、无敏感数据采集、文件系统访问严格限制在用户自己的输出目录与配置，路径穿越和命令注入均有实测防护。符合「无恶意代码」参赛要求。
+
+## 二进制加固复审查（2026-08-14，v0.8.3）
+
+### 发现的问题（v0.8.2 及更早）
+| 问题 | 风险 | 修复 |
+| --- | --- | --- |
+| 插件 .so **无 Stack Canary / FORTIFY / Full RELRO** | 手动打包未应用 Debian hardening flags，栈溢出/ROP 无缓解 | ✅ CMakeLists 加 hardening flags（v0.8.3） |
+| **本机路径泄漏进二进制**（`/home/master/...`，Qt 日志宏 __FILE__ 嵌入） | 公开分发泄露构建环境信息 | ✅ `-ffile-prefix-map` 映射为相对路径 |
+
+### v0.8.3 加固实测（readelf/nm/strings 验证）
+| 项 | 结果 |
+| --- | --- |
+| Stack Canary（__stack_chk_fail） | ✅ 已启用 |
+| FORTIFY（-D_FORTIFY_SOURCE=2） | ✅ 标志生效（代码用 Qt 安全 API 无 strcpy 类调用，天然免疫） |
+| Full RELRO（-z relro -z now，BIND_NOW） | ✅ 已启用 |
+| 本机路径泄漏 | ✅ 0 处（映射为 `./src/...`） |
+| PIE / NX | ✅ .so 天然位置无关 + NX 栈 |
+| RPATH/RUNPATH | ✅ 无（无库劫持面） |
+
+### 复审查确认（原结论保持有效）
+- backend 700 root:root；`su -c` 命令 `shlex.quote` 消毒（无注入）
+- 文件名模板渲染后整体 `sanitize_filename`（防穿越/注入）
+- QProcess 全部参数化调用（lpadmin/lpstat/dde-open/dde-file-manager，无 shell）
+- 无硬编码密钥/凭据（strings 扫描零命中）
+- 维护脚本/文件属主全部 root:root，权限符合规范

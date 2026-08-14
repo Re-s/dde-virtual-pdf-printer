@@ -88,3 +88,30 @@
 - QProcess 全部参数化调用（lpadmin/lpstat/dde-open/dde-file-manager，无 shell）
 - 无硬编码密钥/凭据（strings 扫描零命中）
 - 维护脚本/文件属主全部 root:root，权限符合规范
+
+## backend 接口安全审查（2026-08-14，v0.8.3）
+
+backend 以 root 运行（权限 700），接口面：CUPS 参数（job/user/title/copies/options/filename）、
+用户配置文件（~/.config/org.deepin.dde.pdfprinter/pdfprinter.conf：outputDir/filenameTemplate/
+keepTitleExtension）、stdin 数据流、discover 模式。
+
+### 发现的高危漏洞（v0.8.3 前）
+| 漏洞 | 攻击路径 | 危害 | 修复 |
+| --- | --- | --- | --- |
+| **outputDir 任意路径** | 用户配置 `outputDir=/etc/cron.d` 后打印 | root 写入系统目录 → **本地提权** | ✅ 校验输出目录必须位于用户家目录内（realpath 前缀检查），越界回退默认并告警 |
+| **符号链接逃逸** | 用户预建 `~/PDF → /etc` 符号链接 | root 跟随 symlink 写系统目录 | ✅ 默认/配置路径均做 realpath 解析校验，越界返回 None 拒绝写入 |
+
+### 攻击场景实测（v0.8.3 加固后）
+| 场景 | 结果 |
+| --- | --- |
+| 配置 `outputDir=/etc` → 打印 | ✅ 拒绝（WARN 越界），回退默认 `~/PDF` |
+| `~/PDF` symlink → `/etc` → 打印 | ✅ 拒绝（WARN symlink 逃逸 → ERROR 拒绝，无写入） |
+| 正常 `~/PDF` / 家目录内自定义目录 | ✅ 正常写入 |
+| 恢复现场 + 功能回归 | ✅ 打印正常，/etc 干净 |
+
+### 其余接口面确认安全
+- title/文件名：sanitize_filename（basename + 白名单字符）防穿越/注入
+- 模板渲染：`{title}` 清洗、`{jobid}` 仅数字、渲染后整体再清洗
+- copies：isdigit 校验；options：不解析执行
+- stdin 数据：字节流直写（无解析执行）；PJL 剥离仅定位 %PDF 魔数
+- 配置损坏：configparser 异常回退默认目录

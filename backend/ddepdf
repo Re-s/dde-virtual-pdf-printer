@@ -71,9 +71,32 @@ def get_output_dir(username: str) -> str:
             # 展开 ~ 和变量（QSettings 存的是展开后的绝对路径，防御性处理）
             configured = os.path.expanduser(os.path.expandvars(configured))
             if os.path.isabs(configured):
-                outdir = configured
+                # 【安全加固】输出目录必须位于用户家目录下（backend 以 root 运行，
+                # 若允许任意路径，用户可配置 /etc/cron.d 等系统目录 → root 写入
+                # 任意位置 = 本地提权）。
+                real_conf = os.path.realpath(configured)
+                real_home = os.path.realpath(home)
+                if real_conf == real_home or real_conf.startswith(real_home + os.sep):
+                    outdir = configured
+                else:
+                    print(f'WARN: outputDir 越界（非用户家目录），回退默认 {outdir}',
+                          file=sys.stderr)
     except (OSError, configparser.Error):
         pass  # 配置缺失或损坏时回退默认目录
+
+    # 【最终防线】默认/配置后的输出目录再做一次 realpath 校验：
+    # 目录本身或其父组件可能是符号链接（如 ~/PDF → /etc 逃逸），
+    # realpath 解析后必须仍位于用户家目录内，否则拒绝（防 root 写系统目录）。
+    real_out = os.path.realpath(outdir)
+    real_home = os.path.realpath(home)
+    if not (real_out == real_home or real_out.startswith(real_home + os.sep)):
+        print(f'WARN: 输出目录 {outdir} 解析后越界（symlink 逃逸？），回退 {home}/PDF',
+              file=sys.stderr)
+        outdir = os.path.join(home, 'PDF')
+        real_out = os.path.realpath(outdir)
+        if not (real_out == real_home or real_out.startswith(real_home + os.sep)):
+            print('ERROR: 家目录解析异常，拒绝写入（安全起见）', file=sys.stderr)
+            return None
 
     try:
         os.makedirs(outdir, exist_ok=True)
@@ -199,6 +222,9 @@ def main():
         data = data[pdf_start:]
 
     outdir = get_output_dir(username)
+    if outdir is None:
+        print('ERROR: 输出目录不安全（家目录解析异常），拒绝写入', file=sys.stderr)
+        return 1
     # 文件名模板（控制中心设置页可自定义；默认 {title}-{jobid}-{date}-{time}）
     tpl = get_filename_template(username)
     keep_ext = get_keep_extension(username)

@@ -34,7 +34,28 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y debootstrap qemu-user-static
 
+      # ============ rootfs 缓存复用（deepin beige 源稳定，rootfs 长期有效）============
+      # 命中则跳过 debootstrap + apt install（最耗时步骤），直接解压复用
+      - name: Restore rootfs cache (${{ matrix.arch }})
+        id: rootfs-cache
+        uses: actions/cache@v4
+        with:
+          path: /tmp/rootfs-cache-${{ matrix.arch }}.tar.gz
+          key: deepin-rootfs-${{ matrix.arch }}-beige-v1
+
+      - name: Restore rootfs from cache
+        if: steps.rootfs-cache.outputs.cache-hit == 'true'
+        run: |
+          sudo mkdir -p /tmp/rootfs
+          sudo tar xzf /tmp/rootfs-cache-${{ matrix.arch }}.tar.gz -C /tmp/rootfs
+          # qemu 静态二进制在宿主侧（缓存 rootfs 不含），恢复后重新复制
+          if [ "${{ matrix.arch }}" = "loong64" ]; then
+            sudo cp /usr/bin/qemu-loongarch64-static /tmp/rootfs/usr/bin/
+          fi
+          echo "✅ rootfs 缓存命中（跳过 debootstrap + apt install）"
+
       - name: Bootstrap deepin beige rootfs (${{ matrix.arch }})
+        if: steps.rootfs-cache.outputs.cache-hit != 'true'
         run: |
           # deepin 不在 debootstrap 官方脚本里，用 sid 脚本代替（beige 基于 Debian 12）
           sudo cp /usr/share/debootstrap/scripts/sid /usr/share/debootstrap/scripts/beige
@@ -50,6 +71,7 @@ jobs:
           fi
 
       - name: Configure apt sources + install build deps
+        if: steps.rootfs-cache.outputs.cache-hit != 'true'
         run: |
           sudo tee /tmp/rootfs/etc/apt/sources.list > /dev/null <<'EOF'
           deb https://community-packages.deepin.com/beige beige main community
@@ -59,6 +81,13 @@ jobs:
             build-essential dpkg-dev cmake git python3 \
             qt6-base-dev qt6-declarative-dev qt6-tools-dev linguist-qt6 \
             libdtk6core-dev libdtk6gui-dev dde-control-center-dev
+
+      - name: Save rootfs cache (${{ matrix.arch }})
+        if: steps.rootfs-cache.outputs.cache-hit != 'true'
+        run: |
+          # 压缩缓存（含已装构建依赖），下次直接复用
+          sudo tar czf /tmp/rootfs-cache-${{ matrix.arch }}.tar.gz -C /tmp/rootfs .
+          ls -lh /tmp/rootfs-cache-${{ matrix.arch }}.tar.gz
 
       - name: Copy source + build plugin
         run: |
@@ -78,12 +107,13 @@ jobs:
 
       - name: Package deb
         run: |
-          # 版本号：tag 触发用 tag 名（去 v 前缀），分支触发用默认 0.7.2
+          # 版本号：tag 触发用 tag 名（去 v 前缀）；分支触发从源码 kPluginVersion 自动读取
           VER="${GITHUB_REF_NAME#v}"
           case "$VER" in
-            0.*|1.*|2.*) ;;  # 形如 0.7.2 的 tag
-            *) VER="0.8.3" ;;
+            0.*|1.*|2.*) ;;  # 形如 0.8.3 的 tag
+            *) VER=$(grep -oP 'kPluginVersion = QStringLiteral\("\K[^"]+' src/plugin/operation/pdfprintermodule.cpp | head -1) ;;
           esac
+          echo "构建版本: $VER"
           set -x
           sudo chroot /tmp/rootfs bash -x -c "cd /src && bash ci/package-deb.sh ${{ matrix.arch }} $VER" \
             2>&1 | tee /tmp/pkg.log || true

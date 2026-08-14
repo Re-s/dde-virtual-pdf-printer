@@ -14,8 +14,6 @@ on:
 jobs:
   build:
     name: ${{ matrix.arch }}
-    # dev 分支只构建 amd64（省额度/存储）；master/tag 才全三架构
-    if: ${{ !(github.ref == 'refs/heads/dev' && matrix.arch != 'amd64') }}
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
@@ -45,8 +43,9 @@ jobs:
           path: /tmp/rootfs-cache-${{ matrix.arch }}.tar.gz
           key: deepin-rootfs-${{ matrix.arch }}-beige-v1
 
+      # dev 分支只构建 amd64：非 amd64 架构跳过构建步骤（省存储/额度），master/tag 全量
       - name: Restore rootfs from cache
-        if: steps.rootfs-cache.outputs.cache-hit == 'true'
+        if: ${{ !(github.ref == 'refs/heads/dev' && matrix.arch != 'amd64') && steps.rootfs-cache.outputs.cache-hit == 'true' }}
         run: |
           sudo mkdir -p /tmp/rootfs
           sudo tar xzf /tmp/rootfs-cache-${{ matrix.arch }}.tar.gz -C /tmp/rootfs
@@ -57,7 +56,7 @@ jobs:
           echo "✅ rootfs 缓存命中（跳过 debootstrap + apt install）"
 
       - name: Bootstrap deepin beige rootfs (${{ matrix.arch }})
-        if: steps.rootfs-cache.outputs.cache-hit != 'true'
+        if: ${{ !(github.ref == 'refs/heads/dev' && matrix.arch != 'amd64') && steps.rootfs-cache.outputs.cache-hit != 'true' }}
         run: |
           # deepin 不在 debootstrap 官方脚本里，用 sid 脚本代替（beige 基于 Debian 12）
           sudo cp /usr/share/debootstrap/scripts/sid /usr/share/debootstrap/scripts/beige
@@ -73,7 +72,7 @@ jobs:
           fi
 
       - name: Configure apt sources + install build deps
-        if: steps.rootfs-cache.outputs.cache-hit != 'true'
+        if: ${{ !(github.ref == 'refs/heads/dev' && matrix.arch != 'amd64') && steps.rootfs-cache.outputs.cache-hit != 'true' }}
         run: |
           sudo tee /tmp/rootfs/etc/apt/sources.list > /dev/null <<'EOF'
           deb https://community-packages.deepin.com/beige beige main community
@@ -85,13 +84,14 @@ jobs:
             libdtk6core-dev libdtk6gui-dev dde-control-center-dev
 
       - name: Save rootfs cache (${{ matrix.arch }})
-        if: steps.rootfs-cache.outputs.cache-hit != 'true'
+        if: ${{ !(github.ref == 'refs/heads/dev' && matrix.arch != 'amd64') && steps.rootfs-cache.outputs.cache-hit != 'true' }}
         run: |
           # 压缩缓存（含已装构建依赖），下次直接复用
           sudo tar czf /tmp/rootfs-cache-${{ matrix.arch }}.tar.gz -C /tmp/rootfs .
           ls -lh /tmp/rootfs-cache-${{ matrix.arch }}.tar.gz
 
       - name: Copy source + build plugin
+        if: ${{ !(github.ref == 'refs/heads/dev' && matrix.arch != 'amd64') }}
         run: |
           sudo mkdir -p /tmp/rootfs/src
           sudo cp -a . /tmp/rootfs/src/
@@ -108,6 +108,7 @@ jobs:
           sudo find /tmp/rootfs/tmp/inst -name '*.so' 2>/dev/null | head -5 || true
 
       - name: Package deb
+        if: ${{ !(github.ref == 'refs/heads/dev' && matrix.arch != 'amd64') }}
         run: |
           # 版本号：tag 触发用 tag 名（去 v 前缀）；分支触发从源码 kPluginVersion 自动读取
           VER="${GITHUB_REF_NAME#v}"

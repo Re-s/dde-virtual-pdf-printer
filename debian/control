@@ -1,5 +1,5 @@
 Package: dde-pdf-printer
-Version: 0.5.4
+Version: 0.8.6
 Section: utils
 Priority: optional
 Architecture: amd64

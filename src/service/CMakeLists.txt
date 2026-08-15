@@ -8,6 +8,7 @@ set(CMAKE_AUTOMOC ON)
 find_package(Qt6 REQUIRED COMPONENTS Core Gui DBus)
 
 add_library(pdfprinter-service STATIC
+    logger.cpp
     printermanager.cpp
     configmanager.cpp
     outputdirwatcher.cpp

@@ -5,7 +5,7 @@
 set -e
 
 ARCH="${1:?usage: package-deb.sh <arch> [version]}"
-VER="${2:-0.7.2}"
+VER="${2:-0.8.6}"
 PKG="dde-pdf-printer"
 SRC="${SRC_DIR:-/src}"
 INST="${INST_DIR:-/tmp/inst}"

@@ -21,6 +21,7 @@
 
 #include <algorithm>
 
+#include "../../service/logger.h"
 #include "../../service/printermanager.h"
 #include "../../service/configmanager.h"
 #include "../../service/outputdirwatcher.h"
@@ -33,33 +34,14 @@ namespace {
 const QString kPluginVersion = QStringLiteral("0.8.3");
 
 // debug 模式日志：每个 Q_INVOKABLE 功能调用都会写入日志文件，方便排查"按钮点了没反应"。
-// 注意：控制中心进程 stdout/stderr 被 deepin 会话重定向到 /dev/null，且
-// QT_LOGGING_RULES 屏蔽 qDebug/qInfo——必须直接写文件才能看到。
-void writeLog(const QString &msg)
-{
-    const QString dir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
-    QDir().mkpath(dir);
-    const QString path = dir + QStringLiteral("/pdfprinter.log");
-    // 日志大小上限 512KB：超限清空重建（防无限增长磁盘 DoS）
-    if (QFileInfo::exists(path) && QFileInfo(path).size() > 512 * 1024) {
-        QFile::remove(path);
-    }
-    QFile f(path);
-    if (f.open(QIODevice::Append | QIODevice::Text)) {
-        // 仅当前用户可读写（默认 umask 下的追加模式可能为 644）
-        f.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner);
-        QTextStream ts(&f);
-        ts << QDateTime::currentDateTime().toString(QStringLiteral("yyyy-MM-dd hh:mm:ss.zzz"))
-           << QLatin1Char(' ') << msg << QLatin1Char('\n');
-    }
-}
+// 写文件实现已提取到 src/service/logger.h（与 service 层共享）。
 
 void logCall(const QString &feature, const QString &detail = {})
 {
     const QString msg = QStringLiteral("[pdfprinter] CALL %1%2")
                             .arg(feature,
                                  detail.isEmpty() ? QString() : QStringLiteral(" | ") + detail);
-    writeLog(msg);
+    pdfprinterWriteLog(msg);
     qDebug().noquote() << msg;  // 保险：能进 journal 则双通道
 }
 
@@ -67,7 +49,7 @@ void logResult(const QString &feature, bool ok)
 {
     const QString msg = QStringLiteral("[pdfprinter] RESULT %1 -> %2")
                             .arg(feature, ok ? QStringLiteral("OK") : QStringLiteral("FAIL"));
-    writeLog(msg);
+    pdfprinterWriteLog(msg);
     qDebug().noquote() << msg;
 }
 

@@ -302,7 +302,51 @@ skill_view(name='dde-control-center-development')
 cat ~/.hermes/skills/deepin/dde-control-center-development/references/debugging.md
 ```
 
-## 10. 许可证与参赛
+## 10. 安全修复记录（2026-08 实测）
+
+### 已修复的安全问题
+
+| 问题 | 文件 | 修复方式 |
+| --- | --- | --- |
+| 路径遍历漏洞 | `backend/ddepdf:209` | `filename.startswith` → `os.path.realpath(filename).startswith` |
+| 危险 subprocess 调用 | `backend/ddepdf:106-110` | `subprocess.run(['su', ...])` → `os.makedirs` + `os.chown` |
+
+### 安全约束（backend）
+
+- **路径校验**：所有文件路径必须通过 `os.path.realpath()` 解析后再校验前缀
+- **禁止 subprocess**：backend 以 root 运行，禁止使用 `subprocess` 执行 shell 命令
+- **配置文件校验**：输出目录必须位于用户家目录内（`realpath` 校验）
+- **TOCTOU 防御**：写入前二次校验输出目录路径（防止竞态条件）
+
+### postinst 脚本规范
+
+- 必须包含 `if [ "$1" = "configure" ]` 守卫（Debian policy 要求）
+- 打印机创建逻辑仅在 `configure` 时执行
+
+## 11. CI 配置说明
+
+### 构建环境
+
+- **CI 构建**：使用系统 `/usr/bin/cmake`（chroot 环境无 wrapper）
+- **本地构建**：使用 `/usr/local/bin/cmake`（wrapper 自动清理 `LD_LIBRARY_PATH`）
+
+### 多架构构建
+
+- **amd64 / arm64**：GitHub 原生 runner
+- **loong64**：x86_64 runner + `qemu-user-static` 模拟（`--foreign` 双阶段 debootstrap）
+
+### 版本号管理
+
+- **tag 触发**：使用 tag 名（去 `v` 前缀）
+- **分支触发**：从 `src/plugin/operation/pdfprintermodule.cpp` 的 `kPluginVersion` 自动读取
+- **changelog**：版本号必须与 `debian/changelog` 一致
+
+### 发布流程
+
+- tag 推送 → GitHub Actions 自动构建三架构 deb → 创建/更新 Release
+- Release 资产上传使用手动 API（绕过 `gh --clobber` 的 404 bug）
+
+## 12. 许可证与参赛
 
 - GPL-3.0-or-later；基于 deepin Skills 开发，参赛作品
 - 文档：`docs/design.md`（架构）、`docs/security-audit.md`（安全审查）、`docs/forum-print-survey.md`（需求调研）

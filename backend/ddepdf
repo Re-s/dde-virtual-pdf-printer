@@ -16,7 +16,6 @@ import os
 import sys
 import time
 import pwd
-import shlex
 import configparser
 
 
@@ -103,11 +102,7 @@ def get_output_dir(username: str) -> str:
         if uid != -1:
             os.chown(outdir, uid, gid)
     except PermissionError:
-        # 目录不可访问时尝试用 su 切到用户创建（非 root 运行兜底）
-        import subprocess
-        subprocess.run(['su', '-s', '/bin/sh', '-c',
-                        f'mkdir -p {shlex.quote(outdir)}', username],
-                       check=False)
+        pass
     return outdir
 
 
@@ -206,7 +201,7 @@ def main():
 
     # 读取数据：仅接受 CUPS spool 目录下的 filename（root 后端禁止读取任意路径，
     # 防止 CUPS 链外调用读任意文件；其他情况一律回退 stdin）
-    if filename and filename.startswith('/var/spool/cups/') and os.path.exists(filename):
+    if filename and os.path.realpath(filename).startswith('/var/spool/cups/') and os.path.exists(filename):
         with open(filename, 'rb') as f:
             data = f.read()
     else:

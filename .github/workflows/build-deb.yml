@@ -143,13 +143,6 @@ jobs:
           dpkg-deb --info "$DEB" | grep -E 'Package|Version|Architecture'
           dpkg-deb --contents "$DEB" | grep -E '\.so|backend|\.dci' | head -6
 
-      - name: Upload artifact
-        if: ${{ !(github.ref == 'refs/heads/dev' && matrix.arch != 'amd64') }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: dde-pdf-printer-${{ matrix.arch }}
-          path: /tmp/rootfs/src/dde-pdf-printer_*_${{ matrix.arch }}.deb
-
   # ============ tag 触发：构建成功后自动发布 Release ============
   release:
     name: Publish Release

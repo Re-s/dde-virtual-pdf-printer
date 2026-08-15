@@ -10,5 +10,5 @@ Exec=dde-control-center -m pdfprinter
 Icon=dcc_pdfprinter
 Terminal=false
 Categories=Utility;
-X-Deepin-Vendor=user-custom
+X-DDE-Vendor=user-custom
 StartupNotify=false

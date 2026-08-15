@@ -170,13 +170,11 @@ dde-pdf-printer/
 │   ├── org.deepin.dde.pdffile-printer.json   # DConfig meta
 │   └── *.desktop
 ├── docs/
-│   ├── requirements.md        # 需求说明（参赛材料）
-│   ├── design.md              # 设计文档
-│   └── demo.md                # 演示脚本
+│   └── design.md              # 设计文档
 ├── debian/                    # 打包配置
 ├── CMakeLists.txt             # 顶层构建
 ├── README.md                  # 项目说明（参赛提交）
-└── LICENSE                    # LGPL-3.0
+└── LICENSE                    # GPL-3.0-or-later
 ```
 
 ## 6. 里程碑

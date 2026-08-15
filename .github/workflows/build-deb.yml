@@ -74,6 +74,13 @@ jobs:
       - name: Configure apt sources + install build deps
         if: ${{ !(github.ref == 'refs/heads/dev' && matrix.arch != 'amd64') && steps.rootfs-cache.outputs.cache-hit != 'true' }}
         run: |
+          # 挂载必要文件系统（官方 deepin-rootfs 也这么做）
+          sudo mount --bind /dev /tmp/rootfs/dev
+          sudo mount -t proc chproc /tmp/rootfs/proc
+          sudo mount -t sysfs chsys /tmp/rootfs/sys
+          sudo mount -t tmpfs -o size=99% tmpfs /tmp/rootfs/tmp
+          sudo mount -t tmpfs -o size=99% tmpfs /tmp/rootfs/var/tmp
+
           sudo tee /tmp/rootfs/etc/apt/sources.list > /dev/null <<'EOF'
           deb https://community-packages.deepin.com/beige/ crimson main commercial community
           EOF
@@ -82,6 +89,13 @@ jobs:
             build-essential dpkg-dev cmake git python3 \
             qt6-base-dev qt6-declarative-dev qt6-tools-dev linguist-qt6 \
             libdtk6core-dev libdtk6gui-dev dde-control-center-dev
+
+          # 清理挂载
+          sudo umount /tmp/rootfs/var/tmp
+          sudo umount /tmp/rootfs/tmp
+          sudo umount /tmp/rootfs/sys
+          sudo umount /tmp/rootfs/proc
+          sudo umount /tmp/rootfs/dev
 
       - name: Save rootfs cache (${{ matrix.arch }})
         if: ${{ !(github.ref == 'refs/heads/dev' && matrix.arch != 'amd64') && steps.rootfs-cache.outputs.cache-hit != 'true' }}

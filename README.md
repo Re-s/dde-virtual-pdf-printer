@@ -105,8 +105,8 @@ cmake --install build/integration --prefix /usr --strip 2>/dev/null || \
   (cd build/integration && make install DESTDIR=/tmp/inst)
 
 # 打包（ci/package-deb.sh 自动收集 backend/插件/翻译/图标/DEBIAN 脚本）
-SRC_DIR=$PWD INST_DIR=/tmp/inst bash ci/package-deb.sh amd64 0.8.2
-# 产物：dde-pdf-printer_0.8.2_amd64.deb
+SRC_DIR=$PWD INST_DIR=/tmp/inst bash ci/package-deb.sh amd64 0.8.6
+# 产物：dde-pdf-printer_0.8.6_amd64.deb
 ```
 
 **依赖**：`cups`、`cups-filters`、`ghostscript`、`dde-control-center`、Qt6（Core/DBus）、DTK6

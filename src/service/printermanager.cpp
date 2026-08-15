@@ -1,35 +1,12 @@
 #include "printermanager.h"
 #include "configmanager.h"
+#include "logger.h"
 
 #include <QDebug>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
-#include <QStandardPaths>
-#include <QTextStream>
 #include <QUrl>
-
-namespace {
-// 与插件共用同一日志文件（控制中心 stderr 被重定向 /dev/null，qDebug 不可见）
-void pmWriteLog(const QString &msg)
-{
-    const QString dir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
-    QDir().mkpath(dir);
-    const QString path = dir + QStringLiteral("/pdfprinter.log");
-    // 日志大小上限 512KB：超限清空重建（防无限增长磁盘 DoS）
-    if (QFileInfo::exists(path) && QFileInfo(path).size() > 512 * 1024) {
-        QFile::remove(path);
-    }
-    QFile f(path);
-    if (f.open(QIODevice::Append | QIODevice::Text)) {
-        // 仅当前用户可读写
-        f.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner);
-        QTextStream ts(&f);
-        ts << QDateTime::currentDateTime().toString(QStringLiteral("yyyy-MM-dd hh:mm:ss.zzz"))
-           << QLatin1Char(' ') << msg << QLatin1Char('\n');
-    }
-}
-} // namespace
 
 #include <QProcess>
 #include <QProcessEnvironment>
@@ -130,7 +107,7 @@ bool PrinterManager::openOutputDir()
     // 和 xdg-open 都走 portal（返回 true 但不开窗口，实测 gio open 同样失败）。
     // 直接启动 dde-file-manager 绕过 portal（实测 11:49 成功打开窗口）。
     const bool ok = QProcess::startDetached(QStringLiteral("dde-file-manager"), { dir });
-    pmWriteLog(QStringLiteral("[pdfprinter] RESULT PrinterManager::openOutputDir dir=%1 -> %2")
+    pdfprinterWriteLog(QStringLiteral("[pdfprinter] RESULT PrinterManager::openOutputDir dir=%1 -> %2")
                    .arg(dir, ok ? QStringLiteral("OK") : QStringLiteral("FAIL")));
     return ok;
 }
@@ -158,20 +135,14 @@ bool PrinterManager::openPdfFile(const QString &fileName) const
     // xdg-open/QDesktopServices 在 deepin 走 portal，portal 后端失效时
     // 返回成功但不开窗口；dde-open 是 deepin 官方文件打开命令。
     const bool ok = QProcess::startDetached(QStringLiteral("dde-open"), { path });
-    pmWriteLog(QStringLiteral("[pdfprinter] RESULT PrinterManager::openPdfFile file=%1 -> %2")
+    pdfprinterWriteLog(QStringLiteral("[pdfprinter] RESULT PrinterManager::openPdfFile file=%1 -> %2")
                    .arg(path, ok ? QStringLiteral("OK") : QStringLiteral("FAIL")));
     return ok;
 }
 
 bool PrinterManager::deletePdfFile(const QString &fileName) const
 {
-    if (!QFile::remove(QDir(outputDir()).filePath(fileName))) {
-        return false;
-    }
-    // Signals are non-const member functions; the contract pins this method as
-    // const, so emit through a const_cast to notify listeners of the change.
-    const_cast<PrinterManager *>(this)->pdfFilesChanged();
-    return true;
+    return QFile::remove(QDir(outputDir()).filePath(fileName));
 }
 
 bool PrinterManager::runCommand(const QString &cmd, QStringList args) const

@@ -31,7 +31,7 @@
 namespace {
 
 // 插件版本（帮助页展示 + 日志记录，与 deb 包 Version 保持一致）
-const QString kPluginVersion = QStringLiteral("0.8.3");
+const QString kPluginVersion = QStringLiteral("0.8.6");
 
 // debug 模式日志：每个 Q_INVOKABLE 功能调用都会写入日志文件，方便排查"按钮点了没反应"。
 // 写文件实现已提取到 src/service/logger.h（与 service 层共享）。
@@ -84,7 +84,7 @@ public:
         , watcher(new OutputDirWatcher(this))
     {
         // 插件加载即记录版本（排查问题时先确认版本）
-        writeLog(QStringLiteral("[pdfprinter] VERSION %1 (plugin loaded)").arg(kPluginVersion));
+        pdfprinterWriteLog(QStringLiteral("[pdfprinter] VERSION %1 (plugin loaded)").arg(kPluginVersion));
         // Relay printer state changes to the module.
         connect(printerManager, &PrinterManager::printerStateChanged,
                 q, &PdfPrinterModule::printerStateChanged);
@@ -286,16 +286,13 @@ void PdfPrinterModule::refreshPdfList()
 
 QVariantList PdfPrinterModule::pdfFileDetails() const
 {
-    const QDir dir(d->configManager->outputDir());
-    if (!dir.exists()) {
+    // Reuse PrinterManager::listPdfFiles() for the directory scan and sort
+    // instead of duplicating the same logic here.
+    const QStringList names = d->printerManager->listPdfFiles();
+    if (names.isEmpty()) {
         return {};
     }
-    // Scan the output directory directly (same filter as the service layer)
-    // and sort by last-modified time, newest first.
-    QStringList names = dir.entryList({ QStringLiteral("*.pdf") }, QDir::Files, QDir::Name);
-    std::sort(names.begin(), names.end(), [&dir](const QString &a, const QString &b) {
-        return QFileInfo(dir.filePath(a)).lastModified() > QFileInfo(dir.filePath(b)).lastModified();
-    });
+    const QDir dir(d->configManager->outputDir());
     QVariantList details;
     details.reserve(names.size());
     for (const QString &name : names) {

@@ -25,4 +25,11 @@ Q_SIGNALS:
 
 private:
     void syncConfig();                 // 写回配置存储
+    void invalidateCache();            // 使缓存失效
+
+    mutable bool m_cacheValid{false};
+    mutable QString m_outputDir;
+    mutable bool m_autoOpen{false};
+    mutable QString m_filenameTemplate;
+    mutable bool m_keepTitleExtension{false};
 };

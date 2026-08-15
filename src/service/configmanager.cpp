@@ -21,16 +21,22 @@ QSettings openSettings()
 ConfigManager::ConfigManager(QObject *parent)
     : QObject(parent)
 {
+    invalidateCache();
 }
 
 QString ConfigManager::outputDir() const
 {
-    const QSettings settings = openSettings();
-    const QString dir = settings.value(kKeyOutputDir).toString().trimmed();
-    if (dir.isEmpty()) {
-        return QDir::homePath() + QStringLiteral("/PDF");
+    if (!m_cacheValid) {
+        const QSettings settings = openSettings();
+        const QString dir = settings.value(kKeyOutputDir).toString().trimmed();
+        m_outputDir = dir.isEmpty() ? QDir::homePath() + QStringLiteral("/PDF") : dir;
+        m_autoOpen = settings.value(kKeyAutoOpen, false).toBool();
+        const QString tpl = settings.value(kKeyFilenameTemplate).toString().trimmed();
+        m_filenameTemplate = tpl.isEmpty() ? kDefaultTemplate : tpl;
+        m_keepTitleExtension = settings.value(kKeyKeepTitleExtension, false).toBool();
+        m_cacheValid = true;
     }
-    return dir;
+    return m_outputDir;
 }
 
 void ConfigManager::setOutputDir(const QString &dir)
@@ -46,8 +52,10 @@ void ConfigManager::setOutputDir(const QString &dir)
 
 bool ConfigManager::autoOpen() const
 {
-    const QSettings settings = openSettings();
-    return settings.value(kKeyAutoOpen, false).toBool();
+    if (!m_cacheValid) {
+        outputDir(); // 触发缓存加载
+    }
+    return m_autoOpen;
 }
 
 void ConfigManager::setAutoOpen(bool open)
@@ -63,12 +71,10 @@ void ConfigManager::setAutoOpen(bool open)
 
 QString ConfigManager::filenameTemplate() const
 {
-    const QSettings settings = openSettings();
-    const QString tpl = settings.value(kKeyFilenameTemplate).toString().trimmed();
-    if (tpl.isEmpty()) {
-        return kDefaultTemplate;
+    if (!m_cacheValid) {
+        outputDir(); // 触发缓存加载
     }
-    return tpl;
+    return m_filenameTemplate;
 }
 
 void ConfigManager::setFilenameTemplate(const QString &tpl)
@@ -85,8 +91,10 @@ void ConfigManager::setFilenameTemplate(const QString &tpl)
 
 bool ConfigManager::keepTitleExtension() const
 {
-    const QSettings settings = openSettings();
-    return settings.value(kKeyKeepTitleExtension, false).toBool();
+    if (!m_cacheValid) {
+        outputDir(); // 触发缓存加载
+    }
+    return m_keepTitleExtension;
 }
 
 void ConfigManager::setKeepTitleExtension(bool keep)
@@ -104,4 +112,10 @@ void ConfigManager::syncConfig()
 {
     QSettings settings = openSettings();
     settings.sync();
+    invalidateCache();
+}
+
+void ConfigManager::invalidateCache()
+{
+    m_cacheValid = false;
 }

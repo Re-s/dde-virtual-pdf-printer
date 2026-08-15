@@ -78,7 +78,7 @@ jobs:
           deb https://community-packages.deepin.com/beige/ crimson main commercial community
           EOF
           sudo chroot /tmp/rootfs apt-get update
-          sudo chroot /tmp/rootfs env DEBIAN_FRONTEND=noninteractive apt-get install -y \
+          sudo chroot /tmp/rootfs env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
             build-essential dpkg-dev cmake git python3 \
             qt6-base-dev qt6-declarative-dev qt6-tools-dev linguist-qt6 \
             libdtk6core-dev libdtk6gui-dev dde-control-center-dev

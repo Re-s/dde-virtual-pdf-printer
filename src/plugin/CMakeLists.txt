@@ -24,7 +24,7 @@ endif()
 
 set(PLUGIN_NAME "pdfprinter")
 
-find_package(Qt6 COMPONENTS Core DBus LinguistTools REQUIRED)
+find_package(Qt6 COMPONENTS Core DBus Qml LinguistTools REQUIRED)
 find_package(DdeControlCenter REQUIRED)
 find_package(Dtk6 COMPONENTS Core Gui REQUIRED)
 
@@ -49,16 +49,28 @@ target_include_directories(${PLUGIN_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../service
 )
 
+# QML 插件模块（编译 QML 模块为 .so，控制中心加载 QML 时需要）
+add_library(${PLUGIN_NAME}_qml MODULE qml/qmldir.cpp)
+target_link_libraries(${PLUGIN_NAME}_qml PRIVATE
+    Qt6::Core
+    Qt6::Qml
+)
+
 # 安装插件到 DCC v1.1 路径（dcc_install_plugin 宏可能生成 v1.0 路径，
 # DCC 2:1.1+ 只扫描 plugins_v1.1/，v1.0 已弃用）
 install(TARGETS ${PLUGIN_NAME}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/dde-control-center/plugins_v1.1/
     RENAME lib${PLUGIN_NAME}plugin.so
 )
-# QML 资源文件跟随插件目录
+# 安装 QML 插件到 DCC v1.1 路径
+install(TARGETS ${PLUGIN_NAME}_qml
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/dde-control-center/plugins_v1.1/
+    RENAME lib${PLUGIN_NAME}_qml.so
+)
+# QML 资源文件跟随插件目录（包括 qmldir 和 qmltypes）
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/qml/
-    DESTINATION ${CMAKE_INSTALL_DATADIR}/dde-control-center/plugins_v1.1/
-    FILES_MATCHING PATTERN "*.qml"
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/dde-control-center/plugins_v1.1/${PLUGIN_NAME}/
+    FILES_MATCHING PATTERN "*.qml" PATTERN "qmldir" PATTERN "*.qmltypes"
 )
 
 # 安装翻译（qm 文件到 DCC 翻译目录）

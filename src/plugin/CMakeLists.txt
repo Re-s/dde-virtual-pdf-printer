@@ -49,7 +49,68 @@ target_include_directories(${PLUGIN_NAME} PRIVATE
 )
 
 # 使用官方宏：自动处理 QML 模块（qt_add_qml_module）、资源编译、安装路径、qmldir 生成
-dcc_install_plugin(NAME ${PLUGIN_NAME} TARGET ${PLUGIN_NAME})
+# 注意：旧版 DCC（deepin beige）的 dcc_install_plugin 不支持 qt_add_qml_module，
+# 需要检测并回退到手动构建
+include(CheckSymbolExists)
+set(CMAKE_REQUIRED_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR})
+check_symbol_exists(dcc_build_plugin "DdeControlCenterPluginMacros.cmake" HAS_DCC_BUILD_PLUGIN)
+
+# 检测 DCC 宏是否支持 qt_add_qml_module（通过检查宏文件内容）
+file(READ "${DdeControlCenter_DIR}/DdeControlCenterPluginMacros.cmake" DCC_MACRO_CONTENT)
+string(FIND "${DCC_MACRO_CONTENT}" "qt_add_qml_module" DCC_HAS_QML_MODULE)
+
+if(DCC_HAS_QML_MODULE GREATER -1)
+    # 新版 DCC：直接使用官方宏
+    dcc_install_plugin(NAME ${PLUGIN_NAME} TARGET ${PLUGIN_NAME})
+else()
+    # 旧版 DCC（beige）：手动构建 QML 模块
+    message(STATUS "DCC macro does not support qt_add_qml_module, using manual QML build")
+
+    # 手动构建 QML 模块
+    file(GLOB_RECURSE QML_FILES "${CMAKE_CURRENT_SOURCE_DIR}/qml/*.qml")
+    set(QRC_CONTENT "<RCC>\n  <qresource prefix=\"/qt/qml/${PLUGIN_NAME}\">\n")
+    foreach(QML_FILE ${QML_FILES})
+        get_filename_component(QML_NAME ${QML_FILE} NAME)
+        string(APPEND QRC_CONTENT "    <file alias=\"${QML_NAME}\">${QML_FILE}</file>\n")
+    endforeach()
+    string(APPEND QRC_CONTENT "  </qresource>\n</RCC>\n")
+    set(QRC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${PLUGIN_NAME}_qml.qrc")
+    file(WRITE "${QRC_FILE}" "${QRC_CONTENT}")
+
+    # 预生成 QML 资源 C++ 文件
+    set(QRC_CPP "${CMAKE_CURRENT_BINARY_DIR}/${PLUGIN_NAME}_qml_res.cpp")
+    find_program(RCC_EXECUTABLE NAMES rcc HINTS /usr/lib/qt6/libexec /usr/lib/qt6/bin /usr/bin)
+    execute_process(
+        COMMAND ${RCC_EXECUTABLE} --name ${PLUGIN_NAME}_qml --output "${QRC_CPP}" "${QRC_FILE}"
+        RESULT_VARIABLE RCC_RESULT
+    )
+    if(NOT RCC_RESULT EQUAL 0)
+        message(FATAL_ERROR "rcc failed for ${PLUGIN_NAME} QML resources")
+    endif()
+
+    # 构建 QML 模块
+    add_library(${PLUGIN_NAME}_qml MODULE qml/qmldir.cpp "${QRC_CPP}")
+    target_link_libraries(${PLUGIN_NAME}_qml PRIVATE Qt6::Core Qt6::Qml)
+
+    # 安装路径（跟随系统 DCC 配置）
+    set(PLUGIN_DIR ${DDE_CONTROL_CENTER_PLUGIN_DIR})
+    set(PLUGIN_INSTALL_DIR ${DDE_CONTROL_CENTER_PLUGIN_INSTALL_DIR})
+
+    # 安装 C++ 插件
+    install(TARGETS ${PLUGIN_NAME}
+        LIBRARY DESTINATION ${PLUGIN_INSTALL_DIR}/${PLUGIN_NAME}/
+    )
+
+    # 安装 QML 模块
+    install(TARGETS ${PLUGIN_NAME}_qml
+        LIBRARY DESTINATION ${PLUGIN_INSTALL_DIR}/${PLUGIN_NAME}/
+    )
+
+    # 安装 qmldir
+    install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/qml/qmldir
+        DESTINATION ${PLUGIN_INSTALL_DIR}/${PLUGIN_NAME}/
+    )
+endif()
 
 # 翻译处理
 dcc_handle_plugin_translation(NAME ${PLUGIN_NAME}

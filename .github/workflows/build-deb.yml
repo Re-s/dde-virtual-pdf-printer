@@ -99,7 +99,7 @@ jobs:
           sudo rm -rf /tmp/rootfs/src/build
           sudo chroot /tmp/rootfs bash -c \
             'cd /src && mkdir -p build && cd build && \
-             cmake ../src/plugin -DCMAKE_INSTALL_PREFIX=/usr 2>&1 | tee /tmp/cmake.log && \
+             /usr/local/bin/cmake ../src/plugin -DCMAKE_INSTALL_PREFIX=/usr 2>&1 | tee /tmp/cmake.log && \
              make -j$(nproc) 2>&1 | tee /tmp/make.log && \
              make install DESTDIR=/tmp/inst 2>&1 | tee /tmp/install.log'
           # 失败时输出关键日志（GitHub 日志页可见）

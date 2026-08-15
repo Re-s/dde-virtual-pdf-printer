@@ -51,11 +51,11 @@ Version: $VER
 Section: utils
 Priority: optional
 Architecture: $ARCH
-Maintainer: Deepin PDF Printer Developers <dev@example.com>
+Maintainer: DDE PDF Printer Developers <dev@example.com>
 Depends: cups, cups-filters, ghostscript, dde-control-center
 Recommends: dde-api
-Description: Deepin virtual PDF printer (CUPS backend + control center plugin)
- Provides a virtual PDF printer for Deepin desktop, similar to
+Description: DDE virtual PDF printer (CUPS backend + control center plugin)
+ Provides a virtual PDF printer for DDE desktop, similar to
  "Microsoft Print to PDF" on Windows.
 EOF
 

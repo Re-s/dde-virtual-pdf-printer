@@ -99,7 +99,11 @@ jobs:
           sudo rm -rf /tmp/rootfs/src/build
           sudo chroot /tmp/rootfs bash -c \
             'cd /src && mkdir -p build && cd build && \
-             cmake ../src/plugin -DCMAKE_INSTALL_PREFIX=/usr 2>&1 | tee /tmp/cmake.log && \
+             cmake ../src/plugin -DCMAKE_INSTALL_PREFIX=/usr \
+               -DDDE_CONTROL_CENTER_PLUGIN_DIR=plugins_v1.1 \
+               -DDDE_CONTROL_CENTER_PLUGIN_INSTALL_DIR=/usr/lib/x86_64-linux-gnu/dde-control-center/plugins_v1.1 \
+               -DDDE_CONTROL_CENTER_TRANSLATION_INSTALL_DIR=/usr/share/dde-control-center/translations/v1.1 \
+               2>&1 | tee /tmp/cmake.log && \
              make -j$(nproc) 2>&1 | tee /tmp/make.log && \
              make install DESTDIR=/tmp/inst 2>&1 | tee /tmp/install.log'
           # 失败时输出关键日志（GitHub 日志页可见）

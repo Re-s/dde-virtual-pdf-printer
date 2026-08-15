@@ -41,7 +41,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /tmp/rootfs-cache-${{ matrix.arch }}.tar.gz
-          key: deepin-rootfs-${{ matrix.arch }}-crimson-v1
+          key: deepin-rootfs-${{ matrix.arch }}-beige-v3
 
       # dev 分支只构建 amd64：非 amd64 架构跳过构建步骤（省存储/额度），master/tag 全量
       - name: Restore rootfs from cache
@@ -55,27 +55,27 @@ jobs:
           fi
           echo "✅ rootfs 缓存命中（跳过 debootstrap + apt install）"
 
-      - name: Bootstrap deepin crimson rootfs (${{ matrix.arch }})
+      - name: Bootstrap deepin beige rootfs (${{ matrix.arch }})
         if: ${{ !(github.ref == 'refs/heads/dev' && matrix.arch != 'amd64') && steps.rootfs-cache.outputs.cache-hit != 'true' }}
         run: |
-          # deepin 不在 debootstrap 官方脚本里，用 sid 脚本代替（crimson 基于 Debian 12）
-          sudo cp /usr/share/debootstrap/scripts/sid /usr/share/debootstrap/scripts/crimson
+          # deepin 不在 debootstrap 官方脚本里，用 sid 脚本代替（beige 基于 Debian 12）
+          sudo cp /usr/share/debootstrap/scripts/sid /usr/share/debootstrap/scripts/beige
           if [ "${{ matrix.arch }}" = "loong64" ]; then
             # 非本机架构：--foreign 二阶段 + qemu 用户态模拟
             sudo debootstrap --arch=loong64 --foreign --no-check-gpg --variant=minbase \
-              crimson /tmp/rootfs https://community-packages.deepin.com/crimson
+              beige /tmp/rootfs https://community-packages.deepin.com/beige
             sudo cp /usr/bin/qemu-loongarch64-static /tmp/rootfs/usr/bin/
             sudo chroot /tmp/rootfs /debootstrap/debootstrap --second-stage
           else
             sudo debootstrap --arch=${{ matrix.arch }} --no-check-gpg --variant=minbase \
-              crimson /tmp/rootfs https://community-packages.deepin.com/crimson
+              beige /tmp/rootfs https://community-packages.deepin.com/beige
           fi
 
       - name: Configure apt sources + install build deps
         if: ${{ !(github.ref == 'refs/heads/dev' && matrix.arch != 'amd64') && steps.rootfs-cache.outputs.cache-hit != 'true' }}
         run: |
           sudo tee /tmp/rootfs/etc/apt/sources.list > /dev/null <<'EOF'
-          deb https://community-packages.deepin.com/crimson crimson main community
+          deb https://community-packages.deepin.com/beige beige main community
           EOF
           sudo chroot /tmp/rootfs apt-get update
           sudo chroot /tmp/rootfs env DEBIAN_FRONTEND=noninteractive apt-get install -y \

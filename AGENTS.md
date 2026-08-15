@@ -47,11 +47,12 @@ cmake -S src/plugin -B build/integration -DCMAKE_INSTALL_PREFIX=/usr
 cmake --build build/integration -j$(nproc)
 ```
 
-**⚠️ 构建三铁律（项目特有）**：
+**⚠️ 构建铁律（项目特有）**：
 
 1. **cmake 用 `/usr/local/bin/cmake`**（wrapper，自动 `env -u LD_LIBRARY_PATH`；裸 `cmake` 在 Hermes/沙箱环境会被污染的 libssl 炸掉）
-2. **改 QML 必须 `rm -rf build/integration` 完整重建**：QML 会被编译进 `libpdfprinter_qml.so`（qmlcache），增量 make 不感知 QML 源码变化 → 旧逻辑仍在
-3. **打包漏 qmldir/qmltypes 会导致插件静默不加载**：`cp` 时 `*.qml` 之外还要带 `qmldir` 和 `*_qml.qmltypes`
+2. **改 QML 必须 `rm -rf build/integration` 完整重建**：QML 通过 `dcc_install_plugin` → `qt_add_qml_module` 编译进 `libpdfprinter_qml.so`（qmlcache），增量 make 不感知 QML 源码变化 → 旧逻辑仍在
+3. **禁止手动创建 qmldir/qmldir.cpp**：`dcc_install_plugin` 宏自动生成 `qmldir`（含 URI、linktarget、QML 文件列表），手动创建会导致冲突或 QML 模块加载失败
+4. **CMakeLists.txt 必须使用 `dcc_install_plugin` 宏**：该宏内部调用 `qt_add_qml_module` 创建正确的 QML 模块（URI、版本、资源编译、安装路径），手动配置会导致 `No module named "pdfprinter" found` 错误
 
 ## 4. 打包与安装
 
@@ -140,6 +141,57 @@ lp -d DDE-PDF somefile.txt        # 打印 → ~/PDF/ 或配置目录出现 .pdf
   （GET release → DELETE 同名 assets/{id} → POST uploads.github.com）；`gh api --input` 上传文件。
 - **只推文档不想触发 CI**：commit message 加 `[skip ci]`（GitHub Actions 跳过该提交）；
   上传 Release 资产（API）本身不触发 workflow。
+
+## 5.9 控制中心插件加载调试（2026-08 实测）
+
+### 加载状态机与状态码
+
+控制中心日志（`~/.cache/deepin/dde-control-center/dde-control-center.log`）中每个插件经历状态转移：
+```
+PluginBegin → MetaDataEnd → ModuleLoad → ModuleEnd → DataBegin → DataEnd → MainObjEnd → PluginEnd
+```
+
+| 状态码首 nibble | 含义 | 说明 |
+| --- | --- | --- |
+| `1` | 正常 | 如 `14000000` = MetaDataEnd |
+| `3` | 插件级完成但未加载 | `34000000` = PluginEnd（.so 或 QML 模块加载失败） |
+
+常见错误及排查：
+
+| 日志关键字 | 原因 | 修复 |
+| --- | --- | --- |
+| `No module named "pdfprinter" found` | QML 模块 URI 未注册 | CMakeLists.txt 必须用 `dcc_install_plugin` 宏 |
+| `ModuleErr` + `contains no type named` | QML 类型未找到 | 检查 qmldir 和 QML 文件名首字母大写 |
+| `DataErr` + `create data skipped` | C++ DccFactory 未加载 | 检查 .so 链接、`DCC_FACTORY_CLASS`、moc |
+| `MainObjErr` + `component create main object error` | `{Name}Main.qml` 不存在或路径错 | 确认文件名、QML 缓存已清除 |
+| `dccData is null` / `Cannot read property of null` | C++ 数据对象未注入到 QML | 确认 `dcc_install_plugin` 正确生成 QML 模块 |
+
+### 诊断命令
+
+```bash
+# 查看插件加载日志（实时）
+tail -f ~/.cache/deepin/dde-control-center/dde-control-center.log | grep pdfprinter
+
+# 验证 .so 包含工厂接口
+strings /usr/lib/.../plugins_v1.1/pdfprinter/pdfprinter.so | grep org.deepin.dde.dcc-factory
+
+# 验证 QML 模块已编译为资源
+strings /usr/lib/.../plugins_v1.1/pdfprinter/libpdfprinter_qml.so | grep "import org.deepin.dcc"
+
+# 查看运行时加载的库
+cat /proc/$(pgrep -f dde-control-center)/maps | grep pdfprinter
+
+# D-Bus 验证模块是否注册
+dbus-send --session --dest=org.deepin.dde.ControlCenter1 --type=method_call --print-reply \
+  /org/deepin/dde/ControlCenter1 org.deepin.dde.ControlCenter1.GetAllModule | grep pdfprinter
+```
+
+### 关键架构约束
+
+- **v1.1 插件**：QML 通过 `qt_add_qml_module` 编译为 Qt 资源，控制中心从 `qrc://` 加载
+- **插件目录结构**：`plugins_v1.1/<name>/` 下必须有 `<name>.so`、`lib<name>_qml.so`、`qmldir`
+- **禁止手动创建 qmldir**：`dcc_install_plugin` 自动生成，手动创建会导致 URI 冲突
+- **QML 缓存**：`~/.cache/deepin/dde-control-center/qmlcache/`，改 QML 后必须清除
 
 ## 6. 二次开发常见任务指引
 

@@ -256,7 +256,38 @@ grep -rniE 'deepin-(pdf|printer)|deepinpdf' debian/ src/ README.md AGENTS.md doc
 # 结果必须为空或仅注释/技术描述
 ```
 
-## 9. 许可证与参赛
+## 9. 官方 deepin Skills 引用
+
+本项目基于以下 deepin Skills 开发，遇到控制中心开发问题时优先查阅对应 skill 文档：
+
+| Skill | 用途 | 本地路径 |
+| --- | --- | --- |
+| `dde-control-center-development` | 控制中心插件开发、调试、加载问题排查 | `~/.hermes/skills/deepin/dde-control-center-development/` |
+| `dtk-development` | DTK 应用框架开发 | `~/.hermes/skills/deepin/dtk-development/` |
+| `deepin-25-platform` | deepin 25 平台特性与约束 | `~/.hermes/skills/deepin/deepin-25-platform/` |
+| `dcc-qml-ui-patterns` | 控制中心 QML UI 设计模式 | `~/.hermes/skills/deepin/dcc-qml-ui-patterns/` |
+
+### 关键 skill 文档（本项目踩坑必读）
+
+| 文档 | 解决的问题 |
+| --- | --- |
+| `dde-control-center-development/references/debugging.md` | **dccData 为 undefined** 排查、插件不显示诊断、QML 缓存问题 |
+| `dde-control-center-development/references/plugin-development.md` | `dcc_install_plugin` 宏用法、目录结构、命名约束 |
+| `dde-control-center-development/references/architecture.md` | 插件加载状态机、v1.0/v1.1 格式差异、DccObject 树 |
+| `dde-control-center-development/references/cpp-api.md` | DCC_FACTORY_CLASS、DccFactory 注册、C++ 数据模块 |
+| `dde-control-center-development/references/qml-api.md` | DccGroupView、DccRepeater、DccDBusInterface 组件 |
+
+### 使用方式
+
+```bash
+# 在 Hermes 中加载 skill
+skill_view(name='dde-control-center-development')
+
+# 直接查阅本地文件
+cat ~/.hermes/skills/deepin/dde-control-center-development/references/debugging.md
+```
+
+## 10. 许可证与参赛
 
 - GPL-3.0-or-later；基于 deepin Skills 开发，参赛作品
 - 文档：`docs/design.md`（架构）、`docs/security-audit.md`（安全审查）、`docs/forum-print-survey.md`（需求调研）

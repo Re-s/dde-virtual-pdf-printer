@@ -1,4 +1,4 @@
-# Deepin 虚拟 PDF 打印机 — 项目框架设计
+# DDE 虚拟 PDF 打印机 — 项目框架设计
 
 > 参赛方向：① dde-control-center-development（控制中心插件）
 > 核心创意：为 deepin 提供 Windows「Microsoft Print to PDF」等价能力

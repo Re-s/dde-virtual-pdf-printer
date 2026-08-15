@@ -36,14 +36,14 @@ public:
     explicit PrinterManager(QObject *parent = nullptr);
 
     // 状态查询
-    bool printerExists() const;        // lpstat 检测 Deepin-PDF 打印机
+    bool printerExists() const;        // lpstat 检测 DDE-PDF 打印机
     bool isEnabled() const;            // 打印机是否启用
-    QString printerName() const;       // 固定返回 "Deepin-PDF"
+    QString printerName() const;       // 固定返回 "DDE-PDF"
     QString outputDir() const;         // 默认 ~/PDF
 
     // 操作（返回是否成功）
-    bool createPrinter();              // lpadmin -p Deepin-PDF -E -v deepinpdf:/ -P Generic-PDF PPD
-    bool removePrinter();              // lpadmin -x Deepin-PDF
+    bool createPrinter();              // lpadmin -p DDE-PDF -E -v ddepdf:/ -P Generic-PDF PPD
+    bool removePrinter();              // lpadmin -x DDE-PDF
     bool openOutputDir();              // 文件管理器打开输出目录
 
     // PDF 文件

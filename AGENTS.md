@@ -258,6 +258,21 @@ grep -rniE 'deepin-(pdf|printer)|deepinpdf' debian/ src/ README.md AGENTS.md doc
 
 ## 9. 官方 deepin Skills 引用
 
+**⚠️ 开发前必做：先从官方仓库获取最新 skill**
+
+```bash
+# 1. 从 GitHub 获取最新 deepin Skills
+git clone https://github.com/linuxdeepin/deepin-skills.git /tmp/deepin-skills
+
+# 2. 安装需要的 skill（以 dde-control-center-development 为例）
+#    skill 文件位于 /tmp/deepin-skills/dde-control-center-development/
+#    复制到 Hermes skill 目录即可生效
+cp -r /tmp/deepin-skills/dde-control-center-development ~/.hermes/skills/deepin/
+
+# 3. 在 Hermes 中加载 skill
+#    skill_view(name='dde-control-center-development')
+```
+
 本项目基于以下 deepin Skills 开发，遇到控制中心开发问题时优先查阅对应 skill 文档：
 
 | Skill | 用途 | 本地路径 |

@@ -2,7 +2,6 @@ module pdfprinter
 linktarget pdfprinter_qml
 optional plugin pdfprinter_qml
 classname pdfprinterPlugin
-typeinfo pdfprinter_qml.qmltypes
 prefer :/qt/qml/pdfprinter/
 Pdfprinter 1.0 Pdfprinter.qml
 PdfprinterFilesPage 1.0 PdfprinterFilesPage.qml

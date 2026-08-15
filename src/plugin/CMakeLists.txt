@@ -49,8 +49,27 @@ target_include_directories(${PLUGIN_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../service
 )
 
-# QML 插件模块（编译 QML 模块为 .so，控制中心加载 QML 时需要）
-add_library(${PLUGIN_NAME}_qml MODULE qml/qmldir.cpp)
+# QML 插件模块（编译 QML 为 Qt 资源嵌入 .so，控制中心通过 qrc:// 加载）
+file(GLOB QML_FILES "${CMAKE_CURRENT_SOURCE_DIR}/qml/*.qml")
+set(QRC_CONTENT "<RCC>\n  <qresource prefix=\"/qt/qml/${PLUGIN_NAME}\">\n")
+foreach(QML_FILE ${QML_FILES})
+    get_filename_component(QML_NAME ${QML_FILE} NAME)
+    string(APPEND QRC_CONTENT "    <file alias=\"${QML_NAME}\">${QML_FILE}</file>\n")
+endforeach()
+string(APPEND QRC_CONTENT "  </qresource>\n</RCC>\n")
+set(QRC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${PLUGIN_NAME}_qml.qrc")
+file(WRITE "${QRC_FILE}" "${QRC_CONTENT}")
+# 预生成 QML 资源 C++ 文件（configure 阶段执行 rcc，避免 AUTOMOC 时文件不存在）
+set(QRC_CPP "${CMAKE_CURRENT_BINARY_DIR}/${PLUGIN_NAME}_qml_res.cpp")
+find_program(RCC_EXECUTABLE NAMES rcc HINTS /usr/lib/qt6/libexec /usr/lib/qt6/bin /usr/bin)
+execute_process(
+    COMMAND ${RCC_EXECUTABLE} --name ${PLUGIN_NAME}_qml --output "${QRC_CPP}" "${QRC_FILE}"
+    RESULT_VARIABLE RCC_RESULT
+)
+if(NOT RCC_RESULT EQUAL 0)
+    message(FATAL_ERROR "rcc failed for ${PLUGIN_NAME} QML resources: ${RCC_EXECUTABLE}")
+endif()
+add_library(${PLUGIN_NAME}_qml MODULE qml/qmldir.cpp "${QRC_CPP}")
 target_link_libraries(${PLUGIN_NAME}_qml PRIVATE
     Qt6::Core
     Qt6::Qml
@@ -59,18 +78,17 @@ target_link_libraries(${PLUGIN_NAME}_qml PRIVATE
 # 安装插件到 DCC v1.1 路径（dcc_install_plugin 宏可能生成 v1.0 路径，
 # DCC 2:1.1+ 只扫描 plugins_v1.1/，v1.0 已弃用）
 install(TARGETS ${PLUGIN_NAME}
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/dde-control-center/plugins_v1.1/
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/dde-control-center/plugins_v1.1/${PLUGIN_NAME}/
     RENAME lib${PLUGIN_NAME}plugin.so
 )
 # 安装 QML 插件到 DCC v1.1 路径
 install(TARGETS ${PLUGIN_NAME}_qml
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/dde-control-center/plugins_v1.1/
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/dde-control-center/plugins_v1.1/${PLUGIN_NAME}/
     RENAME lib${PLUGIN_NAME}_qml.so
 )
-# QML 资源文件跟随插件目录（包括 qmldir 和 qmltypes）
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/qml/
-    DESTINATION ${CMAKE_INSTALL_DATADIR}/dde-control-center/plugins_v1.1/${PLUGIN_NAME}/
-    FILES_MATCHING PATTERN "*.qml" PATTERN "qmldir" PATTERN "*.qmltypes"
+# QML 模块定义文件（qmldir 与 .so 同目录，QML 内容已编译为资源嵌入 _qml.so）
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/qml/qmldir
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/dde-control-center/plugins_v1.1/${PLUGIN_NAME}/
 )
 
 # 安装翻译（qm 文件到 DCC 翻译目录）

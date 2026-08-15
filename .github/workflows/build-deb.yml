@@ -41,7 +41,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /tmp/rootfs-cache-${{ matrix.arch }}.tar.gz
-          key: deepin-rootfs-${{ matrix.arch }}-beige-v1
+          key: deepin-rootfs-${{ matrix.arch }}-beige-v2
 
       # dev 分支只构建 amd64：非 amd64 架构跳过构建步骤（省存储/额度），master/tag 全量
       - name: Restore rootfs from cache

@@ -49,8 +49,17 @@ target_include_directories(${PLUGIN_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../service
 )
 
-# 安装插件（自动收集 qml/ 下所有资源）
-dcc_install_plugin(NAME ${PLUGIN_NAME} TARGET ${PLUGIN_NAME})
+# 安装插件到 DCC v1.1 路径（dcc_install_plugin 宏可能生成 v1.0 路径，
+# DCC 2:1.1+ 只扫描 plugins_v1.1/，v1.0 已弃用）
+install(TARGETS ${PLUGIN_NAME}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/dde-control-center/plugins_v1.1/
+    RENAME lib${PLUGIN_NAME}plugin.so
+)
+# QML 资源文件跟随插件目录
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/qml/
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/dde-control-center/plugins_v1.1/
+    FILES_MATCHING PATTERN "*.qml"
+)
 
 # 安装翻译（qm 文件到 DCC 翻译目录）
 install(FILES

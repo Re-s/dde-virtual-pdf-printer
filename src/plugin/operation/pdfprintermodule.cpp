@@ -107,16 +107,13 @@ public:
         connect(watcher, &OutputDirWatcher::filesChanged,
                 q, &PdfPrinterModule::refreshPdfList);
 
-        // Snapshot the current file set as the diff baseline BEFORE the first
-        // refresh, so autoOpen only fires for files that appear afterwards and
-        // never re-opens pre-existing PDFs on the initial load.
         // NOTE: cannot call q->refreshPdfList() here -- q->d is not yet
-        // assigned during Impl construction, so populate our own cache instead.
-        lastFiles = printerManager->listPdfFiles();
-        pdfFiles = lastFiles;
-
-        // Start watching the configured output directory.
-        watcher->watch(configManager->outputDir());
+        // assigned during Impl construction. Also avoid calling
+        // printerManager->listPdfFiles() or configManager->outputDir() here
+        // because this constructor runs in DccFactory's thread pool and
+        // ConfigManager may not be safe to access from worker threads.
+        // Initialize empty caches; they will be populated by the first
+        // refreshPdfList() call after the module is fully constructed.
     }
 
     PrinterManager *printerManager;
@@ -134,6 +131,12 @@ PdfPrinterModule::PdfPrinterModule(QObject *parent)
     : QObject(parent)
     , d(new Impl(this))
 {
+    // Initialize file list and start watching after module is fully constructed.
+    // These must be called here (not in Impl constructor) because
+    // DccFactory::create() runs in a thread pool and ConfigManager
+    // may not be safe to access during construction.
+    refreshPdfList();
+    d->watcher->watch(d->configManager->outputDir());
 }
 
 QString PdfPrinterModule::pluginVersion() const

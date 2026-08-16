@@ -51,11 +51,6 @@ target_include_directories(${PLUGIN_NAME} PRIVATE
 # 使用官方宏：自动处理 QML 模块（qt_add_qml_module）、资源编译、安装路径、qmldir 生成
 # 注意：旧版 DCC（deepin beige）的 dcc_install_plugin 不支持 qt_add_qml_module，
 # 需要检测并回退到手动构建
-include(CheckSymbolExists)
-set(CMAKE_REQUIRED_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR})
-check_symbol_exists(dcc_build_plugin "DdeControlCenterPluginMacros.cmake" HAS_DCC_BUILD_PLUGIN)
-
-# 检测 DCC 宏是否支持 qt_add_qml_module（通过检查宏文件内容）
 file(READ "${DdeControlCenter_DIR}/DdeControlCenterPluginMacros.cmake" DCC_MACRO_CONTENT)
 string(FIND "${DCC_MACRO_CONTENT}" "qt_add_qml_module" DCC_HAS_QML_MODULE)
 

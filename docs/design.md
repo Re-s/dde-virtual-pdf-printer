@@ -2,7 +2,7 @@
 
 > 参赛方向：① dde-control-center-development（控制中心插件）
 > 核心创意：为 deepin 提供 Windows「Microsoft Print to PDF」等价能力
-> 状态：POC 已验证通过（2026-08-12），进入正式开发
+> 状态：v0.8.7 已发布（2026-08-16），三架构（amd64/arm64/loong64）deb 可用
 
 ## 1. 项目目标
 
@@ -111,7 +111,7 @@
 | --- | --- |
 | `PrinterManager` | 检测打印机存在（lpstat）、创建（lpadmin）、删除 |
 | `OutputDirWatcher` | 监听输出目录文件变化（QFileSystemWatcher） |
-| `ConfigManager` | DConfig 读写（输出目录、文件名规则、自动打开） |
+| `ConfigManager` | QSettings 读写（输出目录、文件名规则、自动打开） |
 | `PolkitHelper` | 需要 root 的操作（lpadmin 创建时 polkit 授权） |
 
 ### 3.3 控制中心插件 — `src/plugin/`（QML + C++）
@@ -177,20 +177,15 @@ dde-pdf-printer/
 └── LICENSE                    # GPL-3.0-or-later
 ```
 
-## 6. 里程碑
+## 6. 时间线回顾
 
-| 阶段 | 内容 | 预计 |
+| 阶段 | 时间 | 里程碑 |
 | --- | --- | --- |
-| ✅ POC | backend + 打印机 + 打印出 PDF | 已完成 |
-| M1 | 打印机管理服务（C++）：检测/创建/删除/配置 | 1 天 |
-| M2 | 控制中心插件骨架（DCC_FACTORY_CLASS + 页面导航） | 1 天 |
-| M3 | 插件核心功能：状态页 + 创建/删除 + 配置页 | 1.5 天 |
-| M4 | PDF 列表页 + 文件操作（打开/删除/目录） | 1 天 |
-| M5 | 打磨：翻译、DCI 图标、搜索索引、主题适配 | 1 天 |
-| M6 | 打包（deb 安装完整测试）+ 文档 + 演示材料 | 1 天 |
-| M7 | 参赛提交（GitHub 开源 + 论坛发帖） | 0.5 天 |
-
-**总计约 7 天**（9/9 截止前充裕）
+| ✅ POC | 2026-08-12 | backend + 打印机 + 打印出 PDF（可行性验证） |
+| ✅ 并行开发 | 2026-08-12 ~ 08-15 | 服务层 / 插件 C++ / 插件 QML 三模块并行，集成验证 |
+| ✅ 打磨 | 2026-08-14 | 安全加固（Hardening flags）、打包、文档 |
+| ✅ v0.8.6 | 2026-08-15 | 多架构 CI 发布（amd64/arm64/loong64） |
+| ✅ v0.8.7 | 2026-08-16 | 修复控制中心闪退（Impl 成员初始化顺序 UB）+ 重新发布 |
 
 ## 7. 风险与对策
 

@@ -1,6 +1,6 @@
 # 安全审查报告 — dde-pdf-printer
 
-> 审查日期：2026-08-12 | 版本：v0.4.9 基线（v0.8.3 加固 + 复审查）
+> 审查日期：2026-08-12 | 版本基线：v0.4.9 → v0.8.3 加固 → v0.8.7 发布（2026-08-16）
 > 审查范围：backend（root 运行 Python）+ C++ 服务层 + 控制中心插件（C++/QML）+ debian 打包
 > 审查重点：文件系统非法访问 / 异常外连 / 敏感数据采集
 
@@ -159,3 +159,13 @@ keepTitleExtension）、stdin 数据流、discover 模式。
 ### 其他
 - debian/rules + changelog 旧名 `deepin-pdf-printer`/`deepinpdf`（dpkg-buildpackage 备选路径）→ ✅ 已改新名（对外违规清除）
 - 独立审查报告归档：`docs/security-reviews/independent-audit-codex.md`（第二版）+ 对比报告 `docs/security-reviews/comparison-report.md`
+
+## 控制中心插件稳定性修复（2026-08-16，v0.8.7）
+
+非传统安全漏洞，但根因涉及 C++ 未定义行为且造成本地崩溃（DoS），按内存安全类问题记录：
+
+| 问题 | 根因 | 修复 | 风险级别 |
+| --- | --- | --- | --- |
+| 控制中心打开插件时 SIGSEGV 闪退 | `PdfPrinterModule::Impl` 成员**声明顺序**与构造函数**初始化列表顺序**不一致（`-Wreorder`）：`configManager` 声明在 `printerManager` 之后，但初始化列表却先初始化 `configManager`；C++ 按声明顺序初始化，导致 `PrinterManager` 构造时读取**未初始化的垃圾 `ConfigManager*`**，后续任何 `listPdfFiles()/outputDir()` 都解引用非法指针 | 调换 `Impl` 中 `configManager`、`printerManager` 的声明顺序，与初始化列表一致（消除 `-Wreorder`） | 中（本地崩溃，无数据泄露/越权） |
+
+> 同类隐患提示：项目构建已建议启用 `-Werror=reorder`，让此类初始化顺序 UB 在编译期暴露，避免拖到运行时。当前 `src/plugin/CMakeLists.txt` 已带 Hardening flags。

@@ -19,6 +19,8 @@
 > `filenameTemplate`（文件名模板）/ `keepTitleExtension`（保留原后缀）/
 > `pluginVersion`（版本号）/ `openOutputDirPicker()`（异步目录选择），
 > 以及 PdfPrinterModule 对应 Q_PROPERTY/Q_INVOKABLE——以实际源码为准。
+>
+> ⚠️ **本文档为历史参考**，当前以源码（`src/`）与 `AGENTS.md` 为准。
 
 ## 接口契约（钉死，不得修改签名）
 
@@ -170,12 +172,12 @@ private:
 ## 环境要点（所有任务必须遵守）
 
 1. **cmake 用 `/usr/local/bin/cmake`**（wrapper，自动处理 LD_LIBRARY_PATH 污染）
-2. **DTK/Qt 版本**：控制中心插件用 Qt6 + Dtk6（`find_package(Dtk6Widget)`，target `Dtk6::Widget`）；本机有 libdtk6*-dev 6.7.47
+2. **DTK/Qt 版本**：控制中心插件用 Qt6 + Dtk6（`find_package(Dtk6Widget)`，target `Dtk6::Widget`）；具体 dev 版本依构建环境安装（见 `AGENTS.md` 第 3 节）
 3. **编译命令**：`cd <build> && /usr/local/bin/cmake .. && make -j$(nproc)`
 4. 参考官方示例：`dde-control-center` 源码 `examples/plugin-example/` 目录
 5. 插件命名：PLUGIN_NAME = `pdfprinter`；根 QML name = `pdfprinter`；QML 文件首字母大写
 6. DCC 插件 CMake 依赖：`find_package(DdeControlCenter REQUIRED)`（已装 dde-control-center-dev 6.1.101）
-7. 网络请求用 `netfetch.py`（见 socks-proxy-fallback 技能，自动直连/代理）
+7. ⚠️ 本项目**禁止任何网络请求**（安全红线，见 `AGENTS.md` 第 8 节）；开发期调研用的爬虫工具（netfetch.py）不属于产品功能
 
 ## 验证要求
 

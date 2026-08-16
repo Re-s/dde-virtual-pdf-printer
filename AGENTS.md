@@ -241,7 +241,7 @@ lp -d DDE-PDF /path/to/file && ls -t ~/PDF/ | head -1   # 打印 → PDF
 | --- | --- |
 | 作品名 / 仓库名 | ✅ 用 DDE 生态表述（如「DDE 虚拟 PDF 打印机」/ `dde-virtual-pdf-printer`） |
 | deb 包名 / 可执行名 / 应用显示名 | ❌ 不得含 `deepin`（如 `deepin-pdf-printer`、`deepinpdf` 均违规；`dde-pdf-printer` 是 DDE 表述，✅ 合规） |
-| 帮助页版本号 / README 标题 | ❌ 不得含 `deepin`（如 `deepin-pdf-printer v0.8.2` 违规；`dde-pdf-printer v0.8.2` ✅ 合规） |
+| 帮助页版本号 / README 标题 | ❌ 不得含 `deepin`（如 `deepin-pdf-printer v0.8.2` 违规；`dde-pdf-printer v0.8.7` ✅ 合规） |
 | 插件显示名 | ✅ 「PDF 打印机」（模块名 `pdfprinter` 无 deepin 字样） |
 
 **允许保留**（技术事实描述，非名称宣传）：

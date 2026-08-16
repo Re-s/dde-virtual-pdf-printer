@@ -110,6 +110,12 @@ else()
     install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/qml/qmldir
         DESTINATION ${PLUGIN_INSTALL_DIR}/${PLUGIN_NAME}/
     )
+
+    # 安装 QML 源文件（控制中心需要从文件系统加载）
+    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/qml/
+        DESTINATION ${PLUGIN_INSTALL_DIR}/${PLUGIN_NAME}/
+        FILES_MATCHING PATTERN "*.qml"
+    )
 endif()
 
 # 翻译处理

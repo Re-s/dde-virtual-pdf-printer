@@ -37,15 +37,15 @@
 
 | 控制中心入口 | 打印机状态 |
 | --- | --- |
-| ![入口](https://raw.githubusercontent.com/Re-s/dde-virtual-pdf-printer/master/docs/screenshots/00-home.png) | ![状态](https://raw.githubusercontent.com/Re-s/dde-virtual-pdf-printer/master/docs/screenshots/01-status.png) |
+| ![入口](https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.8.7/00-home.png) | ![状态](https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.8.7/01-status.png) |
 
 | PDF 文件列表 | 设置 |
 | --- | --- |
-| ![文件列表](https://raw.githubusercontent.com/Re-s/dde-virtual-pdf-printer/master/docs/screenshots/02-files.png) | ![设置](https://raw.githubusercontent.com/Re-s/dde-virtual-pdf-printer/master/docs/screenshots/03-settings.png) |
+| ![文件列表](https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.8.7/02-files.png) | ![设置](https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.8.7/03-settings.png) |
 
 | 帮助 | 输出目录（生成的 PDF） |
 | --- | --- |
-| ![帮助](https://raw.githubusercontent.com/Re-s/dde-virtual-pdf-printer/master/docs/screenshots/04-help.png) | ![输出目录](https://raw.githubusercontent.com/Re-s/dde-virtual-pdf-printer/master/docs/screenshots/11-output-dir.png) |
+| ![帮助](https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.8.7/04-help.png) | ![输出目录](https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.8.7/11-output-dir.png) |
 
 ## 四、安装方式
 
@@ -112,7 +112,7 @@ cmake --build build/integration -j$(nproc)
 
 ### AI 工具调用 deepin Skills 对话记录截图
 
-![AI 对话记录](https://raw.githubusercontent.com/Re-s/dde-virtual-pdf-printer/master/docs/screenshots/05-ai-dialogue.png)
+![AI 对话记录](https://github.com/Re-s/dde-virtual-pdf-printer/releases/download/v0.8.7/05-ai-dialogue.png)
 
 > 上图展示 AI 编程工具调用 deepin Skills（dde-control-center-development / dtk-development / deepin-25-platform）辅助开发的关键过程：POC 验证 → 契约化并行开发 → 目录选择闪退修复（D-Bus 方案）→ 回写修复（WRITE 属性/QML 缓存）→ P0 增强与发布。
 

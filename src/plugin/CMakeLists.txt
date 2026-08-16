@@ -57,6 +57,13 @@ string(FIND "${DCC_MACRO_CONTENT}" "qt_add_qml_module" DCC_HAS_QML_MODULE)
 if(DCC_HAS_QML_MODULE GREATER -1)
     # 新版 DCC：直接使用官方宏
     dcc_install_plugin(NAME ${PLUGIN_NAME} TARGET ${PLUGIN_NAME})
+
+    # 官方宏不安装 .qml 文件（它们被编译进 .so 作为 Qt 资源），
+    # 但控制中心可能需要 .qml 文件在插件目录中
+    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/qml/
+        DESTINATION ${DDE_CONTROL_CENTER_PLUGIN_INSTALL_DIR}/${PLUGIN_NAME}/
+        FILES_MATCHING PATTERN "*.qml"
+    )
 else()
     # 旧版 DCC（beige）：手动构建 QML 模块
     message(STATUS "DCC macro does not support qt_add_qml_module, using manual QML build")

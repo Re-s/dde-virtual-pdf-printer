@@ -1,3 +1,12 @@
+dde-pdf-printer (0.8.7) unstable; urgency=medium
+
+  * Fix control center crash (SIGSEGV in ConfigManager::outputDir):
+    fix Impl member initialisation order (-Wreorder UB)
+
+  * Fix plugin not loading / control center crash after install
+
+ -- DDE PDF Printer Developers <dev@example.com>  Sun, 16 Aug 2026 12:00:00 +0800
+
 dde-pdf-printer (0.8.6) unstable; urgency=medium
 
   * Initial POC release

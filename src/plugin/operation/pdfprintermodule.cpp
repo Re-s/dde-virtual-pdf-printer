@@ -116,8 +116,8 @@ public:
         // refreshPdfList() call after the module is fully constructed.
     }
 
-    PrinterManager *printerManager;
     ConfigManager *configManager;
+    PrinterManager *printerManager;
     OutputDirWatcher *watcher;
 
     QStringList pdfFiles;   // cached file name list, refreshed by refreshPdfList()
